@@ -91,7 +91,7 @@ export default function AdminLoginPage() {
             <Tv className="w-6 h-6 text-c6-gold" />
           </div>
           <h1 className="text-2xl font-bold tracking-tight text-white uppercase tracking-wider">
-            IPTV<span className="text-c6-gold font-extrabold">CARBON</span>
+            Facilita <span className="text-c6-gold font-extrabold">IPTV</span>
           </h1>
           <p className="text-xs text-slate-400 mt-2 font-medium">
             Painel Administrativo Master • Gestão de Clientes e Recorrência

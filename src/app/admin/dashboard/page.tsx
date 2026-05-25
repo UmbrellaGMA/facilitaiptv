@@ -350,7 +350,7 @@ export default function AdminDashboardPage() {
               </div>
               {isSidebarOpen && (
                 <span className="font-bold text-base tracking-wider text-white">
-                  IPTV<span className="text-c6-gold font-extrabold">CARBON</span>
+                  Facilita <span className="text-c6-gold font-extrabold">IPTV</span>
                 </span>
               )}
             </Link>
@@ -1119,7 +1119,7 @@ export default function AdminDashboardPage() {
                         className="w-full mt-4"
                         onClick={handlePushMovies}
                         disabled={isPushing || selectedClients.length === 0}
-                        loading={isPushing}
+                        isLoading={isPushing}
                       >
                         Publicar Novidades ({selectedClients.length})
                       </Button>

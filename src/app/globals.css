@@ -109,3 +109,13 @@ body {
   transform: translateY(-2px);
   box-shadow: 0 10px 30px -15px rgba(212, 157, 43, 0.15);
 }
+
+/* Hide scrollbar utility */
+.scrollbar-none {
+  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none;  /* IE and Edge */
+}
+.scrollbar-none::-webkit-scrollbar {
+  display: none; /* Chrome, Safari and Opera */
+}
+

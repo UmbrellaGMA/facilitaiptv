@@ -131,15 +131,17 @@ export default function ClientPageContent({ data }: ClientPageContentProps) {
       {/* Header */}
       <header className="sticky top-0 z-40 bg-zinc-950/80 backdrop-blur-md border-b border-zinc-900 py-4 px-6">
         <div className="max-w-7xl mx-auto flex items-center justify-between">
-          <div className="flex items-center space-x-3">
-            <div className="relative w-9 h-9 rounded-[6px] bg-zinc-900 border border-zinc-800/60 flex items-center justify-center overflow-hidden">
-              {data.logoUrl ? (
-                <img src={data.logoUrl} alt="Logo" className="max-w-full max-h-full object-contain" />
-              ) : (
-                <Tv className="w-5 h-5" style={{ color: data.primaryColor }} />
-              )}
-            </div>
-            <span className="font-extrabold text-lg text-white tracking-tight">{data.name}</span>
+          <div className="flex items-center">
+            {data.logoUrl ? (
+              <img src={data.logoUrl} alt={data.name} className="h-10 w-auto object-contain" />
+            ) : (
+              <div className="flex items-center space-x-3">
+                <div className="relative w-9 h-9 rounded-[6px] bg-zinc-900 border border-zinc-800/60 flex items-center justify-center overflow-hidden">
+                  <Tv className="w-5 h-5" style={{ color: data.primaryColor }} />
+                </div>
+                <span className="font-extrabold text-lg text-white tracking-tight">{data.name}</span>
+              </div>
+            )}
           </div>
   
           <nav className="hidden md:flex items-center space-x-8 text-sm font-medium text-zinc-400">
@@ -261,11 +263,11 @@ export default function ClientPageContent({ data }: ClientPageContentProps) {
             </p>
           </div>
 
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+          <div className="flex overflow-x-auto md:grid md:grid-cols-3 lg:grid-cols-6 gap-4 pb-4 md:pb-0 scrollbar-none snap-x snap-mandatory">
             {featuredMovies.map((movie, idx) => (
               <div 
                 key={idx} 
-                className="group relative bg-zinc-950 border border-zinc-900/60 overflow-hidden transition-all duration-300 hover:border-zinc-700 hover:shadow-[0_0_15px_rgba(255,255,255,0.05)] cursor-pointer rounded-[6px]"
+                className="group relative bg-zinc-950 border border-zinc-900/60 overflow-hidden transition-all duration-300 hover:border-zinc-700 hover:shadow-[0_0_15px_rgba(255,255,255,0.05)] cursor-pointer rounded-[6px] shrink-0 w-[70vw] sm:w-[45vw] md:w-auto snap-start"
               >
                 {/* Poster Container */}
                 <div className="aspect-[2/3] w-full overflow-hidden relative rounded-t-[6px]">
@@ -429,7 +431,7 @@ export default function ClientPageContent({ data }: ClientPageContentProps) {
                   className="absolute -top-3 left-1/2 -translate-x-1/2 px-4 py-1 text-[10px] font-extrabold text-white uppercase tracking-widest rounded-full"
                   style={{ backgroundColor: data.primaryColor }}
                 >
-                  Mais Recomendado
+                  Mais Vendido
                 </span>
               )}
               
@@ -552,12 +554,29 @@ export default function ClientPageContent({ data }: ClientPageContentProps) {
       {/* Footer */}
       <footer className="border-t border-zinc-900 bg-zinc-950/80 py-12 px-6 relative z-10 text-center">
         <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-6 text-xs text-zinc-500">
-          <div className="flex items-center space-x-2">
-            <Tv className="w-5 h-5" style={{ color: data.primaryColor }} />
-            <span className="font-bold text-white text-sm uppercase tracking-wider">{data.name}</span>
+          <div className="flex items-center">
+            {data.logoUrl ? (
+              <img src={data.logoUrl} alt="Logo" className="h-8 w-auto object-contain" />
+            ) : (
+              <div className="flex items-center space-x-2">
+                <Tv className="w-5 h-5" style={{ color: data.primaryColor }} />
+                <span className="font-bold text-white text-sm uppercase tracking-wider">{data.name}</span>
+              </div>
+            )}
           </div>
   
-          <p>© 2026 {data.name}. Todos os direitos reservados. Grade de canais e programação via internet.</p>
+          <p>
+            © 2026 {data.name}. Todos os direitos reservados. -{' '}
+            <a 
+              href={`https://wa.me/5513997341034?text=Ol%C3%A1%2C%20gostaria%20de%20criar%20um%20site%20IPTV%20como%20o%20da%20${encodeURIComponent(data.name)}`}
+              target="_blank" 
+              rel="noopener noreferrer" 
+              className="hover:underline transition-colors font-bold"
+              style={{ color: data.primaryColor }}
+            >
+              crie seu site agora
+            </a>
+          </p>
   
           <div className="flex space-x-6 font-semibold">
             {data.instagram && (
