@@ -94,6 +94,14 @@ export default function ClientForm({ clientToEdit, onClose, onSuccess }: ClientF
   });
 
   const slugWatch = watch('slug');
+  const primaryColorWatch = watch('primaryColor');
+  const secondaryColorWatch = watch('secondaryColor');
+
+  const sanitizeHexColor = (color: string | undefined, fallback: string = '#000000') => {
+    if (!color) return fallback;
+    const hexPattern = /^#[0-9A-F]{6}$/i;
+    return hexPattern.test(color) ? color : fallback;
+  };
 
   // Load editing client data if provided
   useEffect(() => {
@@ -508,7 +516,8 @@ export default function ClientForm({ clientToEdit, onClose, onSuccess }: ClientF
               <div className="flex space-x-2">
                 <input
                   type="color"
-                  {...register('primaryColor')}
+                  value={sanitizeHexColor(primaryColorWatch, '#e50914')}
+                  onChange={(e) => setValue('primaryColor', e.target.value, { shouldDirty: true, shouldValidate: true })}
                   className="w-11 h-11 rounded-[6px] border border-dark-border/40 cursor-pointer bg-transparent"
                 />
                 <Input
@@ -528,7 +537,8 @@ export default function ClientForm({ clientToEdit, onClose, onSuccess }: ClientF
               <div className="flex space-x-2">
                 <input
                   type="color"
-                  {...register('secondaryColor')}
+                  value={sanitizeHexColor(secondaryColorWatch, '#833ab4')}
+                  onChange={(e) => setValue('secondaryColor', e.target.value, { shouldDirty: true, shouldValidate: true })}
                   className="w-11 h-11 rounded-[6px] border border-dark-border/40 cursor-pointer bg-transparent"
                 />
                 <Input

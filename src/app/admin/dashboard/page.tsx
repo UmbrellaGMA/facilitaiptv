@@ -25,7 +25,8 @@ import {
   LogOut,
   RefreshCw,
   Copy,
-  Layout
+  Layout,
+  Film
 } from 'lucide-react';
 import { Button } from '../../../components/ui/Button';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '../../../components/ui/Card';
@@ -40,7 +41,129 @@ export default function AdminDashboardPage() {
   const [isMounted, setIsMounted] = useState(false);
 
   // Layout navigation
-  const [activeTab, setActiveTab] = useState<'overview' | 'clients' | 'billing'>('overview');
+  const [activeTab, setActiveTab] = useState<'overview' | 'clients' | 'billing' | 'movies'>('overview');
+
+  // Global movies state
+  const [globalMovies, setGlobalMovies] = useState<any[]>([]);
+  const [selectedClients, setSelectedClients] = useState<string[]>([]);
+  const [isPushing, setIsPushing] = useState(false);
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const stored = localStorage.getItem('iptv_global_movies');
+      if (stored) {
+        try {
+          setGlobalMovies(JSON.parse(stored));
+        } catch (e) {
+          console.error(e);
+        }
+      } else {
+        const defaultList = [
+          {
+            title: 'Gladiador II',
+            genre: 'Ação / Épico',
+            year: '2026',
+            rating: '4.9',
+            badge: 'Lançamento 2026',
+            quality: '4K Ultra HD',
+            image: 'https://images.unsplash.com/photo-1594909122845-11baa439b7bf?w=400&q=80'
+          },
+          {
+            title: 'Duna: Parte Dois',
+            genre: 'Ficção Científica',
+            year: '2024',
+            rating: '4.9',
+            badge: 'Destaque',
+            quality: '4K Ultra HD',
+            image: 'https://images.unsplash.com/photo-1536440136628-849c177e76a1?w=400&q=80'
+          },
+          {
+            title: 'Deadpool & Wolverine',
+            genre: 'Ação / Comédia',
+            year: '2024',
+            rating: '4.8',
+            badge: 'Mais Visto',
+            quality: '1080p Dual',
+            image: 'https://images.unsplash.com/photo-1489599849927-2ee91cede3ba?w=400&q=80'
+          }
+        ];
+        setGlobalMovies(defaultList);
+        localStorage.setItem('iptv_global_movies', JSON.stringify(defaultList));
+      }
+    }
+  }, []);
+
+  const saveGlobalMovies = (updatedList: any[]) => {
+    setGlobalMovies(updatedList);
+    localStorage.setItem('iptv_global_movies', JSON.stringify(updatedList));
+  };
+
+  const addGlobalMovie = () => {
+    const newMovie = {
+      title: 'Novo Filme',
+      genre: 'Ação',
+      year: new Date().getFullYear().toString(),
+      rating: '4.5',
+      badge: 'Novidade',
+      quality: '4K Ultra HD',
+      image: 'https://images.unsplash.com/photo-1594909122845-11baa439b7bf?w=400&q=80'
+    };
+    saveGlobalMovies([...globalMovies, newMovie]);
+  };
+
+  const updateGlobalMovie = (index: number, key: string, value: string) => {
+    const updated = [...globalMovies];
+    updated[index] = { ...updated[index], [key]: value };
+    saveGlobalMovies(updated);
+  };
+
+  const removeGlobalMovie = (index: number) => {
+    const updated = globalMovies.filter((_, i) => i !== index);
+    saveGlobalMovies(updated);
+  };
+
+  const handlePushMovies = async () => {
+    if (selectedClients.length === 0) {
+      alert('Por favor, selecione pelo menos um cliente para aplicar o catálogo.');
+      return;
+    }
+
+    setIsPushing(true);
+    try {
+      for (const clientId of selectedClients) {
+        const client = clients.find(c => c.id === clientId);
+        if (client) {
+          await dbService.saveLandingPage({
+            id: client.id,
+            slug: client.slug,
+            featuredMovies: globalMovies
+          });
+        }
+      }
+      alert('Catálogo de filmes aplicado com sucesso aos clientes selecionados!');
+      fetchData();
+    } catch (err: any) {
+      alert(err.message || 'Erro ao aplicar catálogo aos clientes.');
+    } finally {
+      setIsPushing(false);
+    }
+  };
+
+  const handleSelectAllClients = () => {
+    if (selectedClients.length === clients.length) {
+      setSelectedClients([]);
+    } else {
+      setSelectedClients(clients.map(c => c.id));
+    }
+  };
+
+  const handleToggleClientSelection = (clientId: string) => {
+    if (selectedClients.includes(clientId)) {
+      setSelectedClients(selectedClients.filter(id => id !== clientId));
+    } else {
+      setSelectedClients([...selectedClients, clientId]);
+    }
+  };
 
   // Database Data
   const [clients, setClients] = useState<LandingPageData[]>([]);
@@ -268,6 +391,18 @@ export default function AdminDashboardPage() {
               <CreditCard className="w-5 h-5 shrink-0" />
               {isSidebarOpen && <span>Financeiro (SaaS)</span>}
             </button>
+
+            <button
+              onClick={() => setActiveTab('movies')}
+              className={`w-full flex items-center space-x-3 px-4 py-3 rounded-[6px] text-sm font-medium transition-all duration-300 cursor-pointer ${
+                activeTab === 'movies' 
+                  ? 'bg-c6-gold/10 text-c6-gold font-semibold shadow-sm' 
+                  : 'text-slate-400 hover:text-white hover:bg-white/5'
+              }`}
+            >
+              <Film className="w-5 h-5 shrink-0" />
+              {isSidebarOpen && <span>Novidades (Filmes)</span>}
+            </button>
           </nav>
         </div>
  
@@ -300,11 +435,13 @@ export default function AdminDashboardPage() {
               {activeTab === 'overview' && 'Painel Geral de Métricas'}
               {activeTab === 'clients' && 'Gestão de Clientes'}
               {activeTab === 'billing' && 'Financeiro & Recorrência'}
+              {activeTab === 'movies' && 'Filmes em Destaque (Novidades)'}
             </h1>
             <p className="text-sm text-slate-400 mt-1">
               {activeTab === 'overview' && 'Acompanhe faturamento, acessos e novos registros.'}
               {activeTab === 'clients' && 'Crie, suspenda, edite e visualize landing pages white-label.'}
               {activeTab === 'billing' && 'Monitore vencimentos e aprove pagamentos de mensalidades.'}
+              {activeTab === 'movies' && 'Gerencie o catálogo global de novidades e envie para seus clientes.'}
             </p>
           </div>
  
@@ -751,6 +888,246 @@ export default function AdminDashboardPage() {
                 </div>
               </CardContent>
             </Card>
+          </div>
+        )}
+
+        {/* TAB CONTENT: 4. MOVIES / FILMES DE NOVIDADES */}
+        {activeTab === 'movies' && (
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            {/* Left columns: Global Movies Editor list */}
+            <div className="lg:col-span-2 space-y-6">
+              <Card className="p-6">
+                <CardHeader className="flex flex-row items-center justify-between pb-4 border-b border-dark-border/40">
+                  <div>
+                    <CardTitle className="text-lg text-white flex items-center">
+                      <Film className="w-5 h-5 text-c6-gold mr-2" />
+                      <span>Catálogo de Filmes Novos</span>
+                    </CardTitle>
+                    <CardDescription>
+                      Configure a lista global de lançamentos e novidades.
+                    </CardDescription>
+                  </div>
+                  <Button
+                    type="button"
+                    variant="primary"
+                    size="sm"
+                    leftIcon={<Plus className="w-4 h-4" />}
+                    onClick={addGlobalMovie}
+                  >
+                    Adicionar Filme
+                  </Button>
+                </CardHeader>
+                <CardContent className="mt-6 space-y-6">
+                  {globalMovies.length === 0 ? (
+                    <div className="text-center py-12 border border-dashed border-dark-border/30 rounded-[6px] bg-black/10">
+                      <Tv className="w-12 h-12 text-slate-600 mx-auto mb-3" />
+                      <p className="text-sm text-slate-400">Nenhum filme cadastrado no catálogo.</p>
+                      <Button
+                        type="button"
+                        variant="secondary"
+                        size="sm"
+                        className="mt-4"
+                        onClick={addGlobalMovie}
+                      >
+                        Criar Primeiro Filme
+                      </Button>
+                    </div>
+                  ) : (
+                    <div className="space-y-4">
+                      {globalMovies.map((movie, index) => (
+                        <div key={index} className="p-5 border border-dark-border/40 rounded-[6px] bg-black/35 relative hover:border-c6-gold/30 transition-all">
+                          <button
+                            type="button"
+                            onClick={() => removeGlobalMovie(index)}
+                            className="absolute top-4 right-4 p-1.5 text-slate-500 hover:text-red-500 transition-colors cursor-pointer bg-dark-bg/60 rounded-[6px] border border-dark-border hover:border-red-500/20"
+                            title="Remover Filme"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+
+                          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                            {/* Poster Preview */}
+                            <div className="flex flex-col items-center justify-center border border-dark-border/30 rounded-[6px] bg-zinc-950 p-2 h-full min-h-[160px]">
+                              {movie.image ? (
+                                <img 
+                                  src={movie.image} 
+                                  alt={movie.title} 
+                                  className="h-32 w-24 object-cover rounded-[6px] shadow-md mb-2"
+                                  onError={(e) => {
+                                    (e.target as HTMLImageElement).src = 'https://images.unsplash.com/photo-1594909122845-11baa439b7bf?w=400&q=80';
+                                  }}
+                                />
+                              ) : (
+                                <Tv className="w-8 h-8 text-slate-600 mb-2" />
+                              )}
+                              <span className="text-[10px] text-slate-500 font-semibold">Capa do Filme</span>
+                            </div>
+
+                            {/* Inputs grid */}
+                            <div className="md:col-span-3 grid grid-cols-1 sm:grid-cols-2 gap-3">
+                              <div>
+                                <label className="text-xs font-semibold text-slate-400 mb-1 block">Título</label>
+                                <input
+                                  type="text"
+                                  value={movie.title}
+                                  onChange={(e) => updateGlobalMovie(index, 'title', e.target.value)}
+                                  className="h-10 w-full rounded-[6px] border border-dark-border bg-dark-bg/60 px-3 text-sm text-foreground focus:outline-none focus:border-c6-gold"
+                                  placeholder="Ex: Gladiador II"
+                                />
+                              </div>
+
+                              <div>
+                                <label className="text-xs font-semibold text-slate-400 mb-1 block">Gênero</label>
+                                <input
+                                  type="text"
+                                  value={movie.genre}
+                                  onChange={(e) => updateGlobalMovie(index, 'genre', e.target.value)}
+                                  className="h-10 w-full rounded-[6px] border border-dark-border bg-dark-bg/60 px-3 text-sm text-foreground focus:outline-none focus:border-c6-gold"
+                                  placeholder="Ex: Ação / Drama"
+                                />
+                              </div>
+
+                              <div>
+                                <label className="text-xs font-semibold text-slate-400 mb-1 block">Ano</label>
+                                <input
+                                  type="text"
+                                  value={movie.year}
+                                  onChange={(e) => updateGlobalMovie(index, 'year', e.target.value)}
+                                  className="h-10 w-full rounded-[6px] border border-dark-border bg-dark-bg/60 px-3 text-sm text-foreground focus:outline-none focus:border-c6-gold"
+                                  placeholder="Ex: 2026"
+                                />
+                              </div>
+
+                              <div>
+                                <label className="text-xs font-semibold text-slate-400 mb-1 block">Nota de Avaliação</label>
+                                <input
+                                  type="text"
+                                  value={movie.rating}
+                                  onChange={(e) => updateGlobalMovie(index, 'rating', e.target.value)}
+                                  className="h-10 w-full rounded-[6px] border border-dark-border bg-dark-bg/60 px-3 text-sm text-foreground focus:outline-none focus:border-c6-gold"
+                                  placeholder="Ex: 4.9"
+                                />
+                              </div>
+
+                              <div>
+                                <label className="text-xs font-semibold text-slate-400 mb-1 block">Badge (Etiqueta)</label>
+                                <input
+                                  type="text"
+                                  value={movie.badge}
+                                  onChange={(e) => updateGlobalMovie(index, 'badge', e.target.value)}
+                                  className="h-10 w-full rounded-[6px] border border-dark-border bg-dark-bg/60 px-3 text-sm text-foreground focus:outline-none focus:border-c6-gold"
+                                  placeholder="Ex: Lançamento 2026"
+                                />
+                              </div>
+
+                              <div>
+                                <label className="text-xs font-semibold text-slate-400 mb-1 block">Qualidade</label>
+                                <input
+                                  type="text"
+                                  value={movie.quality}
+                                  onChange={(e) => updateGlobalMovie(index, 'quality', e.target.value)}
+                                  className="h-10 w-full rounded-[6px] border border-dark-border bg-dark-bg/60 px-3 text-sm text-foreground focus:outline-none focus:border-c6-gold"
+                                  placeholder="Ex: 4K Ultra HD"
+                                />
+                              </div>
+
+                              <div className="sm:col-span-2">
+                                <label className="text-xs font-semibold text-slate-400 mb-1 block">URL do Pôster (Capa)</label>
+                                <input
+                                  type="text"
+                                  value={movie.image}
+                                  onChange={(e) => updateGlobalMovie(index, 'image', e.target.value)}
+                                  className="h-10 w-full rounded-[6px] border border-dark-border bg-dark-bg/60 px-3 text-sm text-foreground focus:outline-none focus:border-c6-gold font-mono text-xs"
+                                  placeholder="https://exemplo.com/poster.jpg"
+                                />
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            </div>
+
+            {/* Right column: Target clients & publish button */}
+            <div className="space-y-6">
+              <Card className="p-6 sticky top-8">
+                <CardHeader className="pb-4 border-b border-dark-border/40">
+                  <CardTitle className="text-base text-white flex items-center">
+                    <Users className="w-5 h-5 text-c6-gold mr-2" />
+                    <span>Aplicar a Clientes</span>
+                  </CardTitle>
+                  <CardDescription>
+                    Selecione as landing pages que receberão este catálogo de novidades.
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="mt-4 space-y-4">
+                  {clients.length === 0 ? (
+                    <p className="text-sm text-slate-500 text-center py-6">Nenhum cliente cadastrado.</p>
+                  ) : (
+                    <div className="space-y-4">
+                      {/* Select All */}
+                      <button
+                        type="button"
+                        onClick={handleSelectAllClients}
+                        className="w-full flex items-center justify-between px-3 py-2 rounded-[6px] bg-white/5 border border-dark-border/40 text-xs font-semibold text-slate-300 hover:text-white transition-colors text-left"
+                      >
+                        <span>Selecionar Todos</span>
+                        <span className="text-c6-gold">
+                          {selectedClients.length === clients.length ? 'Desmarcar Todos' : 'Marcar Todos'}
+                        </span>
+                      </button>
+
+                      {/* Clients List */}
+                      <div className="max-h-72 overflow-y-auto space-y-2 border border-dark-border/20 rounded-[6px] p-2 bg-black/10">
+                        {clients.map((client) => {
+                          const isSelected = selectedClients.includes(client.id);
+                          return (
+                            <div
+                              key={client.id}
+                              onClick={() => handleToggleClientSelection(client.id)}
+                              className={`flex items-center space-x-3 p-2.5 rounded-[6px] cursor-pointer transition-colors border ${
+                                isSelected 
+                                  ? 'bg-c6-gold/5 border-c6-gold/20 hover:bg-c6-gold/10' 
+                                  : 'border-transparent hover:bg-white/5'
+                              }`}
+                            >
+                              <input
+                                type="checkbox"
+                                checked={isSelected}
+                                onChange={() => {}} // handled by parent onClick
+                                className="w-4 h-4 rounded-[3px] border-dark-border text-c6-gold focus:ring-c6-gold bg-dark-bg"
+                              />
+                              <div className="min-w-0 flex-1">
+                                <p className="text-xs font-bold text-white truncate">{client.name}</p>
+                                <p className="text-[10px] text-slate-500 truncate">/{client.slug}</p>
+                              </div>
+                              <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-[3px] bg-dark-border text-slate-400">
+                                {(client.featuredMovies || []).length} filmes
+                              </span>
+                            </div>
+                          );
+                        })}
+                      </div>
+
+                      {/* Push Button */}
+                      <Button
+                        type="button"
+                        variant="primary"
+                        className="w-full mt-4"
+                        onClick={handlePushMovies}
+                        disabled={isPushing || selectedClients.length === 0}
+                        loading={isPushing}
+                      >
+                        Publicar Novidades ({selectedClients.length})
+                      </Button>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            </div>
           </div>
         )}
       </main>
