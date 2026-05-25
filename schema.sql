@@ -29,6 +29,8 @@ CREATE TABLE IF NOT EXISTS public.landing_pages (
     custom_domain TEXT,
     views_count INTEGER DEFAULT 0,
     status TEXT DEFAULT 'active',
+    show_movies_catalog BOOLEAN DEFAULT true,
+    featured_movies JSONB DEFAULT '[]'::jsonb,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
 );
 

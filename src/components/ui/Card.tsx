@@ -12,7 +12,7 @@ export const Card = React.forwardRef<HTMLDivElement, CardProps>(
       <div
         ref={ref}
         className={cn(
-          'rounded-none border border-dark-border bg-dark-surface p-6 overflow-hidden transition-colors duration-200',
+          'rounded-[6px] border border-dark-border/35 bg-dark-surface p-6 overflow-hidden transition-colors duration-200',
           {
             'glass-panel': glass,
           },

@@ -142,6 +142,21 @@ export default function AdminDashboardPage() {
     }
   };
 
+  // Handle Client Movies Catalog Toggle Quick Action
+  const handleToggleMoviesCatalog = async (client: LandingPageData) => {
+    const newVal = client.showMoviesCatalog === false ? true : false;
+    try {
+      await dbService.saveLandingPage({
+        id: client.id,
+        slug: client.slug,
+        showMoviesCatalog: newVal
+      });
+      fetchData();
+    } catch (err: any) {
+      alert(err.message || 'Erro ao alterar catálogo.');
+    }
+  };
+
   // Handle Manual Payment Approval & Auto Site Liberation Flow
   const handleApprovePayment = async (payment: PaymentData) => {
     try {
@@ -216,40 +231,38 @@ export default function AdminDashboardPage() {
                 </span>
               )}
             </Link>
-          </div>
- 
-          {/* Navigation Links */}
+          </div>          {/* Navigation Links */}
           <nav className="mt-8 px-3 space-y-2">
             <button
               onClick={() => setActiveTab('overview')}
-              className={`w-full flex items-center space-x-3 px-4 py-3 rounded-none text-sm font-medium transition-all duration-300 cursor-pointer border-l-2 ${
+              className={`w-full flex items-center space-x-3 px-4 py-3 rounded-[6px] text-sm font-medium transition-all duration-300 cursor-pointer ${
                 activeTab === 'overview' 
-                  ? 'bg-c6-gold/5 border-l-c6-gold text-c6-gold font-semibold shadow-[inset_4px_0_12px_-4px_rgba(212,157,43,0.1)]' 
-                  : 'text-slate-400 hover:text-white hover:bg-white/5 border-l-transparent'
+                  ? 'bg-c6-gold/10 text-c6-gold font-semibold shadow-sm' 
+                  : 'text-slate-400 hover:text-white hover:bg-white/5'
               }`}
             >
               <Layout className="w-5 h-5 shrink-0" />
               {isSidebarOpen && <span>Visão Geral</span>}
             </button>
- 
+
             <button
               onClick={() => setActiveTab('clients')}
-              className={`w-full flex items-center space-x-3 px-4 py-3 rounded-none text-sm font-medium transition-all duration-300 cursor-pointer border-l-2 ${
+              className={`w-full flex items-center space-x-3 px-4 py-3 rounded-[6px] text-sm font-medium transition-all duration-300 cursor-pointer ${
                 activeTab === 'clients' 
-                  ? 'bg-c6-gold/5 border-l-c6-gold text-c6-gold font-semibold shadow-[inset_4px_0_12px_-4px_rgba(212,157,43,0.1)]' 
-                  : 'text-slate-400 hover:text-white hover:bg-white/5 border-l-transparent'
+                  ? 'bg-c6-gold/10 text-c6-gold font-semibold shadow-sm' 
+                  : 'text-slate-400 hover:text-white hover:bg-white/5'
               }`}
             >
               <Users className="w-5 h-5 shrink-0" />
               {isSidebarOpen && <span>Clientes & Páginas</span>}
             </button>
- 
+
             <button
               onClick={() => setActiveTab('billing')}
-              className={`w-full flex items-center space-x-3 px-4 py-3 rounded-none text-sm font-medium transition-all duration-300 cursor-pointer border-l-2 ${
+              className={`w-full flex items-center space-x-3 px-4 py-3 rounded-[6px] text-sm font-medium transition-all duration-300 cursor-pointer ${
                 activeTab === 'billing' 
-                  ? 'bg-c6-gold/5 border-l-c6-gold text-c6-gold font-semibold shadow-[inset_4px_0_12px_-4px_rgba(212,157,43,0.1)]' 
-                  : 'text-slate-400 hover:text-white hover:bg-white/5 border-l-transparent'
+                  ? 'bg-c6-gold/10 text-c6-gold font-semibold shadow-sm' 
+                  : 'text-slate-400 hover:text-white hover:bg-white/5'
               }`}
             >
               <CreditCard className="w-5 h-5 shrink-0" />
@@ -262,13 +275,13 @@ export default function AdminDashboardPage() {
         <div className="px-3 py-6 border-t border-dark-border/40 space-y-2">
           <button 
             onClick={() => setIsSidebarOpen(!isSidebarOpen)}
-            className="w-full flex items-center justify-center p-2 rounded-none bg-dark-bg/60 border border-dark-border hover:border-c6-gold/40 hover:bg-dark-border/20 text-slate-400 hover:text-c6-gold transition-colors cursor-pointer"
+            className="w-full flex items-center justify-center p-2 rounded-[6px] bg-dark-bg/60 border border-dark-border hover:border-c6-gold/40 hover:bg-dark-border/20 text-slate-400 hover:text-c6-gold transition-colors cursor-pointer"
           >
             <RefreshCw className={`w-4 h-4 transition-transform duration-500 ${isSidebarOpen ? '' : 'rotate-180'}`} />
           </button>
           <button
             onClick={handleLogout}
-            className="w-full flex items-center space-x-3 px-4 py-3 rounded-none text-sm font-medium text-red-500 hover:text-red-400 hover:bg-red-500/10 transition-all cursor-pointer"
+            className="w-full flex items-center space-x-3 px-4 py-3 rounded-[6px] text-sm font-medium text-red-500 hover:text-red-400 hover:bg-red-500/10 transition-all cursor-pointer"
           >
             <LogOut className="w-5 h-5 shrink-0" />
             {isSidebarOpen && <span>Sair do Sistema</span>}
@@ -525,6 +538,7 @@ export default function AdminDashboardPage() {
                   <tr className="border-b border-dark-border/40 text-slate-400 text-xs font-semibold uppercase bg-black/10">
                     <th className="px-6 py-4">Cliente / Identidade</th>
                     <th className="px-6 py-4">Subdomínio / URL</th>
+                    <th className="px-6 py-4 text-center">Filmes Novidades</th>
                     <th className="px-6 py-4">Status</th>
                     <th className="px-6 py-4 text-center">Visualizações</th>
                     <th className="px-6 py-4">Planos</th>
@@ -534,7 +548,7 @@ export default function AdminDashboardPage() {
                 <tbody className="divide-y divide-dark-border/40 text-sm text-slate-300">
                   {filteredClients.length === 0 ? (
                     <tr>
-                      <td colSpan={6} className="px-6 py-12 text-center text-slate-500">
+                      <td colSpan={7} className="px-6 py-12 text-center text-slate-500">
                         Nenhum cliente encontrado.
                       </td>
                     </tr>
@@ -570,6 +584,20 @@ export default function AdminDashboardPage() {
                         <td className="px-6 py-4 font-mono text-xs">
                           <div className="text-c6-gold font-semibold">{client.slug}<span className="text-slate-500">.domínio</span></div>
                           <div className="text-slate-600 text-[10px] mt-0.5">/site/{client.slug}</div>
+                        </td>
+ 
+                        <td className="px-6 py-4 text-center">
+                          <button
+                            title="Alternar exibição do catálogo de filmes novos para este cliente"
+                            onClick={() => handleToggleMoviesCatalog(client)}
+                            className={`px-3 py-1 text-xs font-bold transition-all cursor-pointer rounded-none border ${
+                              client.showMoviesCatalog !== false 
+                                ? 'bg-c6-gold/15 border-c6-gold/30 text-c6-gold hover:bg-c6-gold/25' 
+                                : 'bg-dark-border/45 border-dark-border text-slate-500 hover:text-slate-300'
+                            }`}
+                          >
+                            {client.showMoviesCatalog !== false ? 'Ativo' : 'Inativo'}
+                          </button>
                         </td>
  
                         <td className="px-6 py-4">

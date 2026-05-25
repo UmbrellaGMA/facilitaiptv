@@ -61,6 +61,18 @@ export interface LandingPageData {
   viewsCount: number;
   status: PageStatus;
   createdAt: string;
+  showMoviesCatalog?: boolean;
+  featuredMovies?: MovieItem[];
+}
+
+export interface MovieItem {
+  title: string;
+  genre: string;
+  year: string;
+  rating: string;
+  badge: string;
+  quality: string;
+  image: string;
 }
 
 export interface PaymentData {

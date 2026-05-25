@@ -38,24 +38,29 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     };
   }
 
-  const title = `${pageData.name} | Canais, Filmes e Séries Premium`;
-  const description = pageData.presentation || `Assine a melhor programação de TV por internet com ${pageData.name}. Teste Grátis de 6 horas imediato.`;
+  const title = `${pageData.name} | Canais, Filmes e Séries Premium em HD e 4K`;
+  const description = pageData.presentation || `Assista a melhor grade de canais abertos e fechados, filmes e séries on-demand com a ${pageData.name}. Solicite seu teste grátis!`;
 
   return {
     title,
     description,
+    icons: {
+      icon: pageData.logoUrl || '/favicon.ico',
+      shortcut: pageData.logoUrl || '/favicon.ico',
+      apple: pageData.logoUrl || '/favicon.ico',
+    },
     openGraph: {
       title,
       description,
       type: 'website',
-      url: `https://meusistema.com/site/${slug}`,
+      url: `https://${slug}.meudominio.com`,
       siteName: pageData.name,
       images: [
         {
           url: pageData.promoImageUrl || 'https://images.unsplash.com/photo-1593789198777-f29bc259780e?q=80&w=1200&auto=format&fit=crop',
           width: 1200,
           height: 630,
-          alt: `${pageData.name} Promo Image`
+          alt: `${pageData.name} Promo`
         }
       ]
     },

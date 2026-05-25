@@ -1,5 +1,5 @@
 import { createClient } from '@supabase/supabase-js';
-import { LandingPageData, PaymentData, PageStatus, ClientPlan, FAQItem, TestimonialItem, BenefitItem } from '../types';
+import { LandingPageData, PaymentData, PageStatus, ClientPlan, FAQItem, TestimonialItem, BenefitItem, DashboardMetrics } from '../types';
 
 // Supabase environment variables check
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
@@ -526,7 +526,9 @@ export const dbService = {
       customDomain: dbItem.custom_domain,
       viewsCount: dbItem.views_count || 0,
       status: dbItem.status as PageStatus,
-      createdAt: dbItem.created_at || dbItem.createdAt
+      createdAt: dbItem.created_at || dbItem.createdAt,
+      showMoviesCatalog: dbItem.show_movies_catalog !== undefined ? dbItem.show_movies_catalog : true,
+      featuredMovies: dbItem.featured_movies || []
     };
   },
 
@@ -555,6 +557,8 @@ export const dbService = {
     if (modelItem.status !== undefined) dbPayload.status = modelItem.status;
     if (modelItem.viewsCount !== undefined) dbPayload.views_count = modelItem.viewsCount;
     if (modelItem.createdAt !== undefined) dbPayload.created_at = modelItem.createdAt;
+    if (modelItem.showMoviesCatalog !== undefined) dbPayload.show_movies_catalog = modelItem.showMoviesCatalog;
+    if (modelItem.featuredMovies !== undefined) dbPayload.featured_movies = modelItem.featuredMovies;
     return dbPayload;
   },
 

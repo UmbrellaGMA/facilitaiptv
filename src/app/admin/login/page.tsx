@@ -50,7 +50,7 @@ export default function AdminLoginPage() {
             }
             router.push('/admin/dashboard');
           } else {
-            setError('E-mail ou senha incorretos. Dica: use admin@saas.com / admin123');
+            setError('E-mail ou senha incorretos.');
             setLoading(false);
           }
         }, 1200);
@@ -87,7 +87,7 @@ export default function AdminLoginPage() {
       <div className="w-full max-w-md z-10">
         {/* Logo / Header */}
         <div className="text-center mb-8">
-          <div className="inline-flex w-12 h-12 rounded-none bg-c6-gold/10 border border-c6-gold/20 items-center justify-center mb-4">
+          <div className="inline-flex w-12 h-12 rounded-[6px] bg-c6-gold/10 border border-c6-gold/20 items-center justify-center mb-4">
             <Tv className="w-6 h-6 text-c6-gold" />
           </div>
           <h1 className="text-2xl font-bold tracking-tight text-white uppercase tracking-wider">
@@ -99,15 +99,15 @@ export default function AdminLoginPage() {
         </div>
  
         {/* Login Card */}
-        <Card className="border-dark-border/80 shadow-none rounded-none c6-card-hover">
-          <CardHeader className="rounded-none pb-4 border-b border-dark-border/20">
+        <Card className="border-dark-border/30 shadow-none rounded-[6px] c6-card-hover bg-dark-surface">
+          <CardHeader className="rounded-[6px] pb-4 border-b border-dark-border/10">
             <CardTitle className="text-base font-bold text-slate-200 uppercase tracking-wider">Acessar Conta</CardTitle>
             <CardDescription className="text-xs">Insira suas credenciais para gerenciar a infraestrutura.</CardDescription>
           </CardHeader>
-          <CardContent className="rounded-none">
+          <CardContent className="rounded-[6px]">
             <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
               {error && (
-                <div className="flex items-center space-x-2 rounded-none border border-red-500/30 bg-red-500/10 p-3 text-sm text-red-500">
+                <div className="flex items-center space-x-2 rounded-[6px] border border-red-500/30 bg-red-500/10 p-3 text-sm text-red-500">
                   <AlertCircle className="w-4 h-4 shrink-0" />
                   <span>{error}</span>
                 </div>
@@ -154,12 +154,7 @@ export default function AdminLoginPage() {
           </CardContent>
         </Card>
 
-        {/* Dica de Acesso */}
-        <div className="text-center mt-6 text-xs text-slate-500 border border-dark-border/40 bg-dark-surface/30 rounded-none p-3">
-          <p className="text-[11px] text-slate-400 font-semibold mb-1">🔑 Contas Disponíveis para Login:</p>
-          <p className="font-mono text-c6-gold text-[10px] mt-0.5">Master: gustavo.melo2802@gmail.com | Gu22057422</p>
-          <p className="font-mono text-slate-500 text-[10px] mt-0.5">Simulação: admin@saas.com | admin123</p>
-        </div>
+
       </div>
     </div>
   );
