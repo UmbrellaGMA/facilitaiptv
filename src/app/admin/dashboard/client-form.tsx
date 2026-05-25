@@ -27,7 +27,7 @@ import { Input } from '../../../components/ui/Input';
 import { Textarea } from '../../../components/ui/Textarea';
 import { Select } from '../../../components/ui/Select';
 import { dbService } from '../../../services/db';
-import { LandingPageData, ClientPlan, BenefitItem, FAQItem, TestimonialItem, PageStatus, MovieItem } from '../../../types';
+import { LandingPageData, ClientPlan, BenefitItem, FAQItem, TestimonialItem, PageStatus, MovieItem, PaymentData } from '../../../types';
 
 // Zod schema for client landing page builder form
 const clientFormSchema = z.object({
@@ -45,17 +45,23 @@ const clientFormSchema = z.object({
   customDomain: z.string().optional(),
   status: z.enum(['active', 'pending', 'suspended', 'blocked', 'expired']),
   showMoviesCatalog: z.boolean().optional(),
+  // Add payment/billing fields
+  billingAmount: z.union([z.string(), z.number()]).optional(),
+  billingStatus: z.enum(['approved', 'pending', 'expired']).optional(),
+  billingDueDate: z.string().optional(),
+  billingMethod: z.enum(['pix', 'stripe', 'card', 'mercado_pago']).optional(),
 });
 
 type ClientFormValues = z.infer<typeof clientFormSchema>;
 
 interface ClientFormProps {
   clientToEdit?: LandingPageData | null;
+  paymentToEdit?: PaymentData | null;
   onClose: () => void;
   onSuccess: (updatedClient: LandingPageData) => void;
 }
 
-export default function ClientForm({ clientToEdit, onClose, onSuccess }: ClientFormProps) {
+export default function ClientForm({ clientToEdit, paymentToEdit, onClose, onSuccess }: ClientFormProps) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -93,6 +99,10 @@ export default function ClientForm({ clientToEdit, onClose, onSuccess }: ClientF
       customDomain: '',
       status: 'active',
       showMoviesCatalog: true,
+      billingAmount: 35,
+      billingStatus: 'pending',
+      billingDueDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+      billingMethod: 'pix',
     },
   });
 
@@ -134,8 +144,39 @@ export default function ClientForm({ clientToEdit, onClose, onSuccess }: ClientF
       setFaqs(clientToEdit.faqs || []);
       setTestimonials(clientToEdit.testimonials || []);
       setFeaturedMovies(clientToEdit.featuredMovies || []);
+
+      // Load payment values
+      if (paymentToEdit) {
+        setValue('billingAmount', paymentToEdit.amount);
+        setValue('billingStatus', paymentToEdit.status);
+        setValue('billingDueDate', paymentToEdit.vencimento ? paymentToEdit.vencimento.split('T')[0] : '');
+        setValue('billingMethod', paymentToEdit.method);
+      } else {
+        setValue('billingAmount', 35);
+        setValue('billingStatus', 'pending');
+        setValue('billingDueDate', new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]);
+        setValue('billingMethod', 'pix');
+      }
     } else {
       // Default lists for a new client to make page builder fast
+      setValue('name', '');
+      setValue('slug', '');
+      setValue('whatsapp', '');
+      setValue('telegram', '');
+      setValue('instagram', '');
+      setValue('presentation', '');
+      setValue('trialLink', '');
+      setValue('pixKey', '');
+      setValue('primaryColor', '#e50914');
+      setValue('secondaryColor', '#833ab4');
+      setValue('customDomain', '');
+      setValue('status', 'active');
+      setValue('showMoviesCatalog', true);
+      setValue('billingAmount', 35);
+      setValue('billingStatus', 'pending');
+      setValue('billingDueDate', new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]);
+      setValue('billingMethod', 'pix');
+
       setPlans([
         { id: 'p1', name: 'Plano Mensal', price: '35,00', period: 'mensal', features: ['1 Tela', 'Grade Completa', 'Suporte WhatsApp'] },
         { id: 'p2', name: 'Plano Trimestral', price: '90,00', period: 'trimestral', features: ['1 Tela', 'Grade Completa', 'Suporte Prioritário'], isPopular: true }
@@ -180,7 +221,7 @@ export default function ClientForm({ clientToEdit, onClose, onSuccess }: ClientF
         }
       ]);
     }
-  }, [clientToEdit, setValue]);
+  }, [clientToEdit, paymentToEdit, setValue]);
 
   // Dynamic Slug auto-generation from Name (only for new client creation)
   const nameWatch = watch('name');
@@ -373,9 +414,11 @@ export default function ClientForm({ clientToEdit, onClose, onSuccess }: ClientF
     setLoading(true);
     setError(null);
     try {
+      const { billingAmount, billingStatus, billingDueDate, billingMethod, ...landingPageValues } = values;
+
       const payload: Partial<LandingPageData> = {
         ...clientToEdit,
-        ...values,
+        ...landingPageValues,
         logoUrl: logoPreview,
         bannerUrl: bannerPreview,
         promoImageUrl: promoPreview,
@@ -387,6 +430,18 @@ export default function ClientForm({ clientToEdit, onClose, onSuccess }: ClientF
       };
 
       const result = await dbService.saveLandingPage(payload as any);
+
+      // Save or update payment details
+      await dbService.savePayment({
+        id: paymentToEdit?.id,
+        landingPageId: result.id,
+        clientName: result.name,
+        amount: Number(billingAmount) || 0,
+        status: billingStatus || 'pending',
+        method: billingMethod || 'pix',
+        vencimento: billingDueDate ? new Date(billingDueDate + 'T12:00:00').toISOString() : new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString()
+      });
+
       onSuccess(result);
     } catch (err: any) {
       setError(err.message || 'Erro ao salvar os dados da landing page.');
@@ -520,6 +575,78 @@ export default function ClientForm({ clientToEdit, onClose, onSuccess }: ClientF
             <label htmlFor="showMoviesCatalog" className="text-sm font-semibold text-slate-200 cursor-pointer">
               Exibir Catálogo de Filmes Novos (Novidades)
             </label>
+          </div>
+        </div>
+
+        {/* SECTION: STATUS E FINANCEIRO */}
+        <div className="space-y-4">
+          <h3 className="text-xs font-bold text-c6-gold uppercase tracking-widest border-b border-c6-gold/20 pb-2 flex items-center">
+            <span className="w-1.5 h-1.5 bg-c6-gold mr-2" />
+            1.1. Status & Informações Financeiras
+          </h3>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <Select
+              {...register('status')}
+              label="Status da Landing Page"
+              error={errors.status?.message}
+              options={[
+                { value: 'active', label: 'Ativo (Publicado)' },
+                { value: 'pending', label: 'Pendente (Aguardando Configuração)' },
+                { value: 'suspended', label: 'Suspenso (Inativo)' },
+                { value: 'blocked', label: 'Bloqueado (Bloqueio Admin)' },
+                { value: 'expired', label: 'Expirado (Vencido)' },
+              ]}
+              disabled={loading}
+            />
+
+            <Select
+              {...register('billingStatus')}
+              label="Status de Pagamento (Mensalidade)"
+              error={errors.billingStatus?.message}
+              options={[
+                { value: 'approved', label: 'Pago (Confirmado)' },
+                { value: 'pending', label: 'Pendente (Aguardando)' },
+                { value: 'expired', label: 'Atrasado / Vencido' },
+              ]}
+              disabled={loading}
+            />
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <Input
+              {...register('billingAmount')}
+              type="number"
+              step="0.01"
+              label="Valor da Cobrança (R$)"
+              placeholder="Ex: 35.00"
+              error={errors.billingAmount?.message}
+              disabled={loading}
+            />
+
+            <div>
+              <label className="text-sm font-medium text-slate-300 mb-1.5 block">
+                Data de Vencimento
+              </label>
+              <input
+                type="date"
+                {...register('billingDueDate')}
+                className="flex h-11 w-full rounded-[6px] border border-dark-border bg-dark-bg/60 px-4 py-2 text-sm text-foreground focus:outline-none focus:border-c6-gold focus:shadow-[0_0_0_1px_rgba(212,157,43,0.15)] disabled:cursor-not-allowed disabled:opacity-50 cursor-pointer text-white"
+                disabled={loading}
+              />
+            </div>
+
+            <Select
+              {...register('billingMethod')}
+              label="Meio de Cobrança"
+              error={errors.billingMethod?.message}
+              options={[
+                { value: 'pix', label: 'PIX' },
+                { value: 'stripe', label: 'Stripe' },
+                { value: 'card', label: 'Cartão de Crédito' },
+                { value: 'mercado_pago', label: 'Mercado Pago' },
+              ]}
+              disabled={loading}
+            />
           </div>
         </div>
 

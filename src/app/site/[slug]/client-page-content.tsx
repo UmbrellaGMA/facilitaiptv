@@ -16,7 +16,11 @@ import {
   Send,
   Monitor,
   Laptop,
-  CheckCircle2
+  CheckCircle2,
+  Radio,
+  Headphones,
+  ArrowRight,
+  Wifi
 } from 'lucide-react';
 import { LandingPageData, ClientPlan, BenefitItem } from '../../../types';
 import { Button } from '../../../components/ui/Button';
@@ -117,39 +121,31 @@ export default function ClientPageContent({ data }: ClientPageContentProps) {
   const defaultBannerUrl = 'https://images.unsplash.com/photo-1574375927938-d5a98e8fed85?q=80&w=1920&auto=format&fit=crop';
 
   return (
-    <div className="min-h-screen bg-[#09090b] text-[#fafafa] font-sans relative overflow-x-hidden">
+    <div className="min-h-screen bg-[#050507] text-[#fafafa] font-sans relative overflow-x-hidden">
       
-      {/* Subtle Background Glow at the top */}
-      <div 
-        className="absolute top-0 left-1/2 -translate-x-1/2 w-full max-w-7xl h-[600px] pointer-events-none opacity-20 filter blur-[120px] z-0"
-        style={{
-          background: `radial-gradient(circle at 50% 0%, ${data.primaryColor} 0%, ${data.secondaryColor || data.primaryColor} 100%)`
-        }}
-      />
-
       {/* Header */}
-      <header className="sticky top-0 z-40 bg-zinc-950/80 backdrop-blur-md border-b border-zinc-900 py-4 px-6">
+      <header className="sticky top-0 z-40 bg-[#050507]/90 backdrop-blur-xl border-b border-white/5 py-4 px-6">
         <div className="max-w-7xl mx-auto flex items-center justify-between">
           <div className="flex items-center">
             {data.logoUrl ? (
               <img src={data.logoUrl} alt={data.name} className="h-10 w-auto object-contain" />
             ) : (
-              <div className="flex items-center space-x-3">
-                <div className="relative w-9 h-9 rounded-[6px] bg-zinc-900 border border-zinc-800/60 flex items-center justify-center overflow-hidden">
-                  <Tv className="w-5 h-5" style={{ color: data.primaryColor }} />
+              <div className="flex items-center space-x-2.5">
+                <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ backgroundColor: `${data.primaryColor}20` }}>
+                  <Play className="w-4 h-4 fill-current" style={{ color: data.primaryColor }} />
                 </div>
                 <span className="font-extrabold text-lg text-white tracking-tight">{data.name}</span>
               </div>
             )}
           </div>
   
-          <nav className="hidden md:flex items-center space-x-8 text-sm font-medium text-zinc-400">
+          <nav className="hidden md:flex items-center space-x-8 text-xs font-bold uppercase tracking-wider text-zinc-400">
             <a href="#" className="hover:text-white transition-colors">Início</a>
-            <a href="#sobre-nos" className="hover:text-white transition-colors">Sobre Nós</a>
+            <a href="#planos" className="hover:text-white transition-colors">Planos</a>
+            <a href="#sobre-nos" className="hover:text-white transition-colors">Vantagens</a>
             {data.showMoviesCatalog !== false && (
               <a href="#catalog" className="hover:text-white transition-colors">Lançamentos</a>
             )}
-            <a href="#planos" className="hover:text-white transition-colors">Planos</a>
             <a href="#faq" className="hover:text-white transition-colors">Dúvidas</a>
           </nav>
   
@@ -158,88 +154,100 @@ export default function ClientPageContent({ data }: ClientPageContentProps) {
             target="_blank"
             rel="noopener noreferrer"
           >
-            <Button 
-              size="sm" 
-              className="text-xs font-bold text-white px-5 rounded-[6px] uppercase tracking-wider cursor-pointer transition-transform duration-300 hover:scale-105"
+            <button 
+              className="text-xs font-bold text-white px-6 py-3 rounded-full uppercase tracking-wider cursor-pointer transition-all duration-300 hover:scale-105"
               style={{
                 backgroundColor: data.primaryColor
               }}
             >
-              Teste Grátis
-            </Button>
+              Assinar Agora
+            </button>
           </a>
         </div>
       </header>
  
-      {/* Hero Section */}
-      <section 
-        className="relative min-h-[80vh] flex items-center justify-center px-6 py-24 border-b border-zinc-900 bg-cover bg-center"
-        style={{
-          backgroundImage: `linear-gradient(to bottom, rgba(9, 9, 11, 0.4) 0%, rgba(9, 9, 11, 0.95) 100%), url(${data.bannerUrl || defaultBannerUrl})`
-        }}
-      >
-        <div className="relative max-w-7xl mx-auto w-full grid grid-cols-1 lg:grid-cols-12 gap-12 items-center z-10">
-          {/* Left Text Column */}
-          <div className="lg:col-span-8 space-y-6 text-left">
-            <span 
-              className="inline-flex items-center px-3.5 py-1.5 rounded-[6px] text-xs font-bold uppercase tracking-widest border border-zinc-800/80 bg-zinc-950/80 backdrop-blur-sm"
-              style={{ color: data.primaryColor }}
-            >
-              <Play className="w-3.5 h-3.5 mr-2 fill-current" />
-              Ultra HD 4K & Anti-Travamento
-            </span>
+      {/* ═══════════ HERO SECTION ═══════════ */}
+      <section className="relative min-h-[85vh] flex items-center px-6 overflow-hidden border-b border-white/5">
+        
+        {/* Movie Poster Collage Background */}
+        <div className="absolute inset-0 z-0 select-none pointer-events-none">
+          <div className="absolute top-0 right-0 w-full lg:w-[70%] h-full opacity-55 lg:opacity-85">
+            <div 
+              className="w-full h-full bg-cover bg-center"
+              style={{
+                backgroundImage: `url(${data.bannerUrl || defaultBannerUrl})`,
+                maskImage: 'linear-gradient(to right, transparent 0%, black 15%, black 100%)',
+                WebkitMaskImage: 'linear-gradient(to right, transparent 0%, black 15%, black 100%)'
+              }}
+            />
+          </div>
 
-            <h1 className="text-4xl sm:text-6xl md:text-7xl font-extrabold tracking-tight text-white leading-none uppercase">
-              Cinema em Casa <br />
-              <span className="text-white">Sem Limites e Sem Contratos</span> <br />
-              <span className="inline-block mt-2 font-black" style={{ color: data.primaryColor }}>
-                A melhor programação IPTV.
-              </span>
-            </h1>
+          {/* Gradient overlays */}
+          <div className="absolute inset-0 bg-gradient-to-r from-[#050507] via-[#050507]/40 to-transparent" />
+          <div className="absolute inset-0 bg-gradient-to-t from-[#050507] via-transparent to-transparent" />
+        </div>
 
-            <p className="text-zinc-300 text-lg max-w-2xl leading-relaxed font-normal">
-              {data.presentation || "Assista futebol ao vivo, canais fechados de esportes, filmes de cinema recém-lançados, novelas completas e desenhos infantis em qualquer aparelho conectado à internet."}
+        <div className="relative max-w-7xl mx-auto w-full z-10 py-16">
+          <div className="max-w-2xl space-y-6">
+            
+            {/* Main Headline */}
+            <div>
+              <h1 className="text-4xl sm:text-5xl md:text-6xl font-black tracking-tight text-white leading-[1.1] uppercase">
+                O Melhor<br />
+                <span className="inline-block" style={{ color: data.primaryColor }}>
+                  IPTV do Brasil
+                </span>
+              </h1>
+            </div>
+
+            {/* Subtitle */}
+            <p className="text-zinc-400 text-sm sm:text-base max-w-lg leading-relaxed">
+              {data.presentation || 'Canais ao vivo, filmes e séries em alta qualidade e sem travamentos. A melhor grade de programação na sua casa.'}
             </p>
 
-            <div className="flex flex-wrap items-center gap-4 pt-4">
+            {/* Feature Icons Row */}
+            <div className="grid grid-cols-4 gap-4 max-w-md pt-4">
+              <div className="flex flex-col items-center text-center space-y-2">
+                <Radio className="w-5 h-5 text-zinc-400" />
+                <span className="text-[11px] font-medium text-zinc-500">Canais ao vivo</span>
+              </div>
+              <div className="flex flex-col items-center text-center space-y-2">
+                <Film className="w-5 h-5 text-zinc-400" />
+                <span className="text-[11px] font-medium text-zinc-500">Filmes e Séries</span>
+              </div>
+              <div className="flex flex-col items-center text-center space-y-2">
+                <Monitor className="w-5 h-5 text-zinc-400" />
+                <span className="text-[11px] font-medium text-zinc-500">Qualidade 4K</span>
+              </div>
+              <div className="flex flex-col items-center text-center space-y-2">
+                <Headphones className="w-5 h-5 text-zinc-400" />
+                <span className="text-[11px] font-medium text-zinc-500">Suporte 24h</span>
+              </div>
+            </div>
+
+            {/* CTA Buttons */}
+            <div className="flex flex-wrap items-center gap-4 pt-6">
               <a 
                 href={data.trialLink || getWhatsappLink(defaultTrialText)} 
                 target="_blank"
                 rel="noopener noreferrer"
               >
-                <Button 
-                  size="lg" 
-                  className="text-white font-bold h-14 px-8 rounded-[6px] uppercase tracking-wider cursor-pointer transition-transform duration-300 hover:scale-105"
+                <button 
+                  className="group flex items-center gap-2 text-white font-bold h-12 px-8 rounded-full uppercase text-xs tracking-wider cursor-pointer transition-all duration-300 hover:scale-105"
                   style={{
                     backgroundColor: data.primaryColor
                   }}
                 >
-                  Solicitar Teste Grátis
-                </Button>
+                  Teste Grátis
+                  <ArrowRight className="w-3.5 h-3.5 transition-transform group-hover:translate-x-1" />
+                </button>
               </a>
 
-              <a 
-                href="#planos"
-                className="px-6 py-4 border border-zinc-800 bg-zinc-900/40 hover:bg-zinc-900/60 transition-colors uppercase font-bold text-xs tracking-wider text-white rounded-[6px]"
-              >
-                Ver Planos Disponíveis
+              <a href="#planos">
+                <button className="flex items-center gap-2 h-12 px-8 border border-zinc-800 bg-zinc-900/35 hover:bg-zinc-800/50 transition-all duration-300 uppercase font-bold text-xs tracking-wider text-white rounded-full cursor-pointer hover:border-zinc-700">
+                  Ver Planos
+                </button>
               </a>
-            </div>
-          </div>
-
-          {/* Right Image/Logo Feature box */}
-          <div className="hidden lg:col-span-4 relative flex justify-end">
-            <div className="w-64 h-64 bg-zinc-950/90 border border-zinc-800/60 p-8 flex flex-col items-center justify-center shadow-2xl relative rounded-[6px]">
-              <div className="absolute inset-0 bg-gradient-to-tr from-black to-transparent opacity-60 pointer-events-none rounded-[6px]" />
-              
-              {data.logoUrl ? (
-                <img src={data.logoUrl} alt="Logo" className="max-w-[70%] max-h-[70%] object-contain relative z-10 mb-4" />
-              ) : (
-                <Tv className="w-16 h-16 text-zinc-700 relative z-10 mb-4" style={{ color: data.primaryColor }} />
-              )}
-              
-              <span className="text-xs uppercase font-extrabold tracking-widest text-zinc-400">Plataforma Oficial</span>
-              <span className="text-[10px] text-zinc-500 font-mono mt-1">100% Configurada</span>
             </div>
           </div>
         </div>

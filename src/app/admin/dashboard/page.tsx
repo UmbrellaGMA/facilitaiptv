@@ -676,6 +676,7 @@ export default function AdminDashboardPage() {
                     <th className="px-6 py-4">Cliente / Identidade</th>
                     <th className="px-6 py-4">Subdomínio / URL</th>
                     <th className="px-6 py-4 text-center">Filmes Novidades</th>
+                    <th className="px-6 py-4">Vencimento & Financeiro</th>
                     <th className="px-6 py-4">Status</th>
                     <th className="px-6 py-4 text-center">Visualizações</th>
                     <th className="px-6 py-4">Planos</th>
@@ -685,85 +686,119 @@ export default function AdminDashboardPage() {
                 <tbody className="divide-y divide-dark-border/40 text-sm text-slate-300">
                   {filteredClients.length === 0 ? (
                     <tr>
-                      <td colSpan={7} className="px-6 py-12 text-center text-slate-500">
+                      <td colSpan={8} className="px-6 py-12 text-center text-slate-500">
                         Nenhum cliente encontrado.
                       </td>
                     </tr>
                   ) : (
-                    filteredClients.map((client) => (
-                      <tr key={client.id} className="hover:bg-white/5 transition-all">
-                        <td className="px-6 py-4 flex items-center space-x-3">
-                          <div className="relative w-8 h-8 rounded-none bg-slate-900 border border-dark-border flex items-center justify-center overflow-hidden shrink-0">
-                            {client.logoUrl ? (
-                              <img src={client.logoUrl} alt="Logo" className="max-w-full max-h-full object-contain" />
-                            ) : (
-                              <Tv className="w-4 h-4 text-slate-500" />
-                            )}
-                          </div>
-                          <div>
-                            <p className="font-bold text-white">{client.name}</p>
-                            <div className="flex items-center space-x-2 text-[10px] text-slate-500 mt-0.5">
-                              <span 
-                                className="inline-block w-2.5 h-2.5 rounded-none" 
-                                style={{ backgroundColor: client.primaryColor }}
-                                title="Cor Primária"
-                              />
-                              <span 
-                                className="inline-block w-2.5 h-2.5 rounded-none" 
-                                style={{ backgroundColor: client.secondaryColor }}
-                                title="Cor Secundária"
-                              />
-                              <span>Criado em: {formatDate(client.createdAt)}</span>
+                    filteredClients.map((client) => {
+                      const clientPayment = payments.find(p => p.landingPageId === client.id);
+
+                      return (
+                        <tr key={client.id} className="hover:bg-white/5 transition-all">
+                          <td className="px-6 py-4 flex items-center space-x-3">
+                            <div className="relative w-8 h-8 rounded-none bg-slate-900 border border-dark-border flex items-center justify-center overflow-hidden shrink-0">
+                              {client.logoUrl ? (
+                                <img src={client.logoUrl} alt="Logo" className="max-w-full max-h-full object-contain" />
+                              ) : (
+                                <Tv className="w-4 h-4 text-slate-500" />
+                              )}
                             </div>
-                          </div>
-                        </td>
- 
-                        <td className="px-6 py-4 font-mono text-xs">
-                          <div className="text-c6-gold font-semibold">{client.slug}<span className="text-slate-500">.domínio</span></div>
-                          <div className="text-slate-600 text-[10px] mt-0.5">/site/{client.slug}</div>
-                        </td>
- 
-                        <td className="px-6 py-4 text-center">
-                          <button
-                            title="Alternar exibição do catálogo de filmes novos para este cliente"
-                            onClick={() => handleToggleMoviesCatalog(client)}
-                            className={`px-3 py-1 text-xs font-bold transition-all cursor-pointer rounded-none border ${
-                              client.showMoviesCatalog !== false 
-                                ? 'bg-c6-gold/15 border-c6-gold/30 text-c6-gold hover:bg-c6-gold/25' 
-                                : 'bg-dark-border/45 border-dark-border text-slate-500 hover:text-slate-300'
-                            }`}
-                          >
-                            {client.showMoviesCatalog !== false ? 'Ativo' : 'Inativo'}
-                          </button>
-                        </td>
- 
-                        <td className="px-6 py-4">
-                          <span className={`inline-flex items-center px-2.5 py-1 rounded-none text-xs font-semibold ${
-                            client.status === 'active' ? 'bg-green-500/10 border border-green-500/20 text-green-500' :
-                            client.status === 'pending' ? 'bg-yellow-500/10 border border-yellow-500/20 text-yellow-500' :
-                            client.status === 'suspended' ? 'bg-red-500/10 border border-red-500/20 text-red-500' :
-                            'bg-red-800/10 border border-red-800/20 text-red-400'
-                          }`}>
-                            <span className={`w-1.5 h-1.5 rounded-none mr-2 ${
-                              client.status === 'active' ? 'bg-green-500' :
-                              client.status === 'pending' ? 'bg-yellow-500' :
-                              'bg-red-500'
-                            }`} />
-                            {client.status === 'active' && 'Ativo'}
-                            {client.status === 'pending' && 'Pendente'}
-                            {client.status === 'suspended' && 'Suspenso'}
-                            {client.status === 'expired' && 'Expirado'}
-                            {client.status === 'blocked' && 'Bloqueado'}
-                          </span>
-                        </td>
- 
-                        <td className="px-6 py-4 text-center font-bold text-white">
-                          {client.viewsCount}
-                        </td>
- 
-                        <td className="px-6 py-4 text-xs font-semibold text-slate-400">
-                          {client.plans.length} cadastrados (R$ {client.plans[0]?.price || '0,00'}/m)
-                        </td>
+                            <div>
+                              <p className="font-bold text-white">{client.name}</p>
+                              <div className="flex items-center space-x-2 text-[10px] text-slate-500 mt-0.5">
+                                <span 
+                                  className="inline-block w-2.5 h-2.5 rounded-none" 
+                                  style={{ backgroundColor: client.primaryColor }}
+                                  title="Cor Primária"
+                                />
+                                <span 
+                                  className="inline-block w-2.5 h-2.5 rounded-none" 
+                                  style={{ backgroundColor: client.secondaryColor }}
+                                  title="Cor Secundária"
+                                />
+                                <span>Criado em: {formatDate(client.createdAt)}</span>
+                              </div>
+                            </div>
+                          </td>
+
+                          <td className="px-6 py-4 font-mono text-xs">
+                            <div className="text-c6-gold font-semibold">{client.slug}<span className="text-slate-500">.domínio</span></div>
+                            <div className="text-slate-600 text-[10px] mt-0.5">/site/{client.slug}</div>
+                          </td>
+
+                          <td className="px-6 py-4 text-center">
+                            <button
+                              title="Alternar exibição do catálogo de filmes novos para este cliente"
+                              onClick={() => handleToggleMoviesCatalog(client)}
+                              className={`px-3 py-1 text-xs font-bold transition-all cursor-pointer rounded-none border ${
+                                client.showMoviesCatalog !== false 
+                                  ? 'bg-c6-gold/15 border-c6-gold/30 text-c6-gold hover:bg-c6-gold/25' 
+                                  : 'bg-dark-border/45 border-dark-border text-slate-500 hover:text-slate-300'
+                              }`}
+                            >
+                              {client.showMoviesCatalog !== false ? 'Ativo' : 'Inativo'}
+                            </button>
+                          </td>
+
+                          <td className="px-6 py-4">
+                            {clientPayment ? (
+                              <div className="space-y-1">
+                                <div className="flex items-center space-x-1.5">
+                                  <span className={`inline-block px-1.5 py-0.5 text-[9px] font-extrabold uppercase rounded-none border ${
+                                    clientPayment.status === 'approved' ? 'bg-green-500/10 text-green-500 border-green-500/20' :
+                                    clientPayment.status === 'pending' ? 'bg-yellow-500/10 text-yellow-500 border-yellow-500/20' :
+                                    'bg-red-500/10 text-red-500 border-red-500/20'
+                                  }`}>
+                                    {clientPayment.status === 'approved' ? 'Pago' : clientPayment.status === 'pending' ? 'Pendente' : 'Vencido'}
+                                  </span>
+                                  <span className="text-white font-mono text-xs font-bold">
+                                    R$ {Number(clientPayment.amount).toFixed(2)}
+                                  </span>
+                                </div>
+                                <div className="text-[10px] text-slate-400">
+                                  Vencimento: <span className="font-semibold text-slate-300">{formatDate(clientPayment.vencimento)}</span>
+                                </div>
+                                {clientPayment.status === 'approved' && (
+                                  <div className="text-[9px] text-slate-500">
+                                    Pago em: {formatDate(clientPayment.createdAt)}
+                                  </div>
+                                )}
+                              </div>
+                            ) : (
+                              <div className="text-xs text-slate-500 italic">
+                                Sem cobrança
+                              </div>
+                            )}
+                          </td>
+
+                          <td className="px-6 py-4">
+                            <span className={`inline-flex items-center px-2.5 py-1 rounded-none text-xs font-semibold ${
+                              client.status === 'active' ? 'bg-green-500/10 border border-green-500/20 text-green-500' :
+                              client.status === 'pending' ? 'bg-yellow-500/10 border border-yellow-500/20 text-yellow-500' :
+                              client.status === 'suspended' ? 'bg-red-500/10 border border-red-500/20 text-red-500' :
+                              'bg-red-800/10 border border-red-800/20 text-red-400'
+                            }`}>
+                              <span className={`w-1.5 h-1.5 rounded-none mr-2 ${
+                                client.status === 'active' ? 'bg-green-500' :
+                                client.status === 'pending' ? 'bg-yellow-500' :
+                                'bg-red-500'
+                              }`} />
+                              {client.status === 'active' && 'Ativo'}
+                              {client.status === 'pending' && 'Pendente'}
+                              {client.status === 'suspended' && 'Suspenso'}
+                              {client.status === 'expired' && 'Expirado'}
+                              {client.status === 'blocked' && 'Bloqueado'}
+                            </span>
+                          </td>
+
+                          <td className="px-6 py-4 text-center font-bold text-white">
+                            {client.viewsCount}
+                          </td>
+
+                          <td className="px-6 py-4 text-xs font-semibold text-slate-400">
+                            {client.plans.length} cadastrados (R$ {client.plans[0]?.price || '0,00'}/m)
+                          </td>
  
                         <td className="px-6 py-4 text-right space-x-1.5 shrink-0">
                           <button
@@ -815,7 +850,8 @@ export default function AdminDashboardPage() {
                           </button>
                         </td>
                       </tr>
-                    ))
+                      );
+                    })
                   )}
                 </tbody>
               </table>
@@ -1139,6 +1175,7 @@ export default function AdminDashboardPage() {
           <div className="relative w-full max-w-3xl h-full shadow-none border-l border-dark-border">
             <ClientForm
               clientToEdit={editingClient}
+              paymentToEdit={editingClient ? payments.find(p => p.landingPageId === editingClient.id) : null}
               onClose={() => setIsFormOpen(false)}
               onSuccess={() => {
                 setIsFormOpen(false);
