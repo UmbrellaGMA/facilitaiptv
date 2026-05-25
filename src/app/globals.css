@@ -1,0 +1,111 @@
+@import "tailwindcss";
+
+@theme {
+  --color-dark-bg: #060608;
+  --color-dark-surface: #0c0c0e;
+  --color-dark-border: #1f1f23;
+  --color-c6-gold: #d49d2b;
+  --color-c6-gold-hover: #b8841d;
+  --color-c6-dark-gold: #8d6718;
+  
+  --animate-gradient-flow: gradient-flow 6s ease infinite;
+  --animate-glow-pulse: glow-pulse 3s infinite alternate;
+  --animate-fade-in-up: fade-in-up 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  
+  @keyframes gradient-flow {
+    0% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+    100% { background-position: 0% 50%; }
+  }
+  @keyframes glow-pulse {
+    0% { filter: drop-shadow(0 0 5px rgba(212, 157, 43, 0.3)) drop-shadow(0 0 10px rgba(12, 12, 14, 0.2)); }
+    100% { filter: drop-shadow(0 0 15px rgba(212, 157, 43, 0.6)) drop-shadow(0 0 25px rgba(12, 12, 14, 0.4)); }
+  }
+  @keyframes fade-in-up {
+    from {
+      opacity: 0;
+      transform: translateY(20px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+}
+
+:root {
+  --background: #060608;
+  --foreground: #ffffff;
+  --card: #0c0c0e;
+  --card-foreground: #ffffff;
+  --border: #1f1f23;
+  --primary: #d49d2b;
+  --primary-foreground: #000000;
+  --secondary: #18181b;
+  --secondary-foreground: #ededed;
+  --muted: #0f0f12;
+  --muted-foreground: #a1a1aa;
+  --accent: #d49d2b;
+  --accent-foreground: #000000;
+}
+
+body {
+  background-color: var(--background);
+  color: var(--foreground);
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+  overflow-x: hidden;
+  scroll-behavior: smooth;
+  letter-spacing: -0.01em;
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: #060608;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #1f1f23;
+  border-radius: 0px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #d49d2b;
+}
+
+/* Premium Minimalist Utilities */
+.glass-panel {
+  background: #0c0c0e;
+  border: 1px solid #1f1f23;
+}
+
+.text-gradient-c6 {
+  background: linear-gradient(135deg, #ffffff 0%, #a1a1aa 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.text-gradient-gold {
+  background: linear-gradient(135deg, #f3d078 0%, #d49d2b 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+/* Sharp layout borders */
+.sharp-border {
+  border: 1px solid #1f1f23;
+}
+
+/* Premium C6 card hover */
+.c6-card-hover {
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.c6-card-hover:hover {
+  border-color: #d49d2b;
+  transform: translateY(-2px);
+  box-shadow: 0 10px 30px -15px rgba(212, 157, 43, 0.15);
+}

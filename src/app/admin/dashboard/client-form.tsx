@@ -1,0 +1,841 @@
+'use client';
+
+import React, { useState, useEffect } from 'react';
+import { useForm, useFieldArray } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import * as z from 'zod';
+import { 
+  X, 
+  Upload, 
+  Plus, 
+  Trash2, 
+  Palette, 
+  Settings, 
+  Globe, 
+  HelpCircle, 
+  Users, 
+  CheckCircle2, 
+  Sparkles,
+  Tv,
+  Link as LinkIcon
+} from 'lucide-react';
+import { Button } from '../../../components/ui/Button';
+import { Input } from '../../../components/ui/Input';
+import { Textarea } from '../../../components/ui/Textarea';
+import { Select } from '../../../components/ui/Select';
+import { dbService } from '../../../services/db';
+import { LandingPageData, ClientPlan, BenefitItem, FAQItem, TestimonialItem, PageStatus } from '../../../types';
+
+// Zod schema for client landing page builder form
+const clientFormSchema = z.object({
+  name: z.string().min(3, 'O nome deve ter pelo menos 3 caracteres.'),
+  slug: z.string().min(2, 'O slug da URL deve ter pelo menos 2 caracteres.')
+    .regex(/^[a-z0-9-_]+$/, 'O slug só pode conter letras minúsculas, números, hifens e underlines.'),
+  whatsapp: z.string().min(10, 'Insira o WhatsApp com DDD (apenas números).'),
+  telegram: z.string().optional(),
+  instagram: z.string().optional(),
+  presentation: z.string().min(10, 'Insira uma apresentação atraente.'),
+  trialLink: z.string().optional(),
+  pixKey: z.string().optional(),
+  primaryColor: z.string().regex(/^#[0-9a-fA-F]{6}$/, 'Cor inválida.'),
+  secondaryColor: z.string().regex(/^#[0-9a-fA-F]{6}$/, 'Cor inválida.'),
+  customDomain: z.string().optional(),
+  status: z.enum(['active', 'pending', 'suspended', 'blocked', 'expired']),
+});
+
+type ClientFormValues = z.infer<typeof clientFormSchema>;
+
+interface ClientFormProps {
+  clientToEdit?: LandingPageData | null;
+  onClose: () => void;
+  onSuccess: (updatedClient: LandingPageData) => void;
+}
+
+export default function ClientForm({ clientToEdit, onClose, onSuccess }: ClientFormProps) {
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  // File Upload State
+  const [logoPreview, setLogoPreview] = useState<string>('');
+  const [bannerPreview, setBannerPreview] = useState<string>('');
+  const [promoPreview, setPromoPreview] = useState<string>('');
+
+  // Dynamic Lists State
+  const [plans, setPlans] = useState<ClientPlan[]>([]);
+  const [benefits, setBenefits] = useState<BenefitItem[]>([]);
+  const [faqs, setFaqs] = useState<FAQItem[]>([]);
+  const [testimonials, setTestimonials] = useState<TestimonialItem[]>([]);
+
+  const {
+    register,
+    handleSubmit,
+    setValue,
+    watch,
+    formState: { errors },
+  } = useForm<ClientFormValues>({
+    resolver: zodResolver(clientFormSchema),
+    defaultValues: {
+      name: '',
+      slug: '',
+      whatsapp: '',
+      telegram: '',
+      instagram: '',
+      presentation: '',
+      trialLink: '',
+      pixKey: '',
+      primaryColor: '#e50914',
+      secondaryColor: '#833ab4',
+      customDomain: '',
+      status: 'active',
+    },
+  });
+
+  const slugWatch = watch('slug');
+
+  // Load editing client data if provided
+  useEffect(() => {
+    if (clientToEdit) {
+      setValue('name', clientToEdit.name);
+      setValue('slug', clientToEdit.slug);
+      setValue('whatsapp', clientToEdit.whatsapp);
+      setValue('telegram', clientToEdit.telegram || '');
+      setValue('instagram', clientToEdit.instagram || '');
+      setValue('presentation', clientToEdit.presentation);
+      setValue('trialLink', clientToEdit.trialLink || '');
+      setValue('pixKey', clientToEdit.pixKey || '');
+      setValue('primaryColor', clientToEdit.primaryColor);
+      setValue('secondaryColor', clientToEdit.secondaryColor);
+      setValue('customDomain', clientToEdit.customDomain || '');
+      setValue('status', clientToEdit.status);
+
+      // Previews
+      setLogoPreview(clientToEdit.logoUrl || '');
+      setBannerPreview(clientToEdit.bannerUrl || '');
+      setPromoPreview(clientToEdit.promoImageUrl || '');
+
+      // Sub-lists
+      setPlans(clientToEdit.plans || []);
+      setBenefits(clientToEdit.benefits || []);
+      setFaqs(clientToEdit.faqs || []);
+      setTestimonials(clientToEdit.testimonials || []);
+    } else {
+      // Default lists for a new client to make page builder fast
+      setPlans([
+        { id: 'p1', name: 'Plano Mensal', price: '35,00', period: 'mensal', features: ['1 Tela', 'Grade Completa', 'Suporte WhatsApp'] },
+        { id: 'p2', name: 'Plano Trimestral', price: '90,00', period: 'trimestral', features: ['1 Tela', 'Grade Completa', 'Suporte Prioritário'], isPopular: true }
+      ]);
+      setBenefits([
+        { id: 'b1', title: 'Canais em 4K', description: 'Assista seus esportes e filmes na melhor qualidade.', icon: 'Tv' },
+        { id: 'b2', title: 'Sem Travamentos', description: 'Servidores rápidos e estáveis.', icon: 'Zap' }
+      ]);
+      setFaqs([
+        { question: 'Como testar?', answer: 'Entre em contato pelo WhatsApp para liberação imediata do seu login.' }
+      ]);
+      setTestimonials([
+        { id: 't1', name: 'Paulo Santos', comment: 'Serviço excelente, canais perfeitos e suporte ágil.', rating: 5, role: 'Cliente' }
+      ]);
+    }
+  }, [clientToEdit, setValue]);
+
+  // Dynamic Slug auto-generation from Name (only for new client creation)
+  const nameWatch = watch('name');
+  useEffect(() => {
+    if (!clientToEdit && nameWatch) {
+      const generatedSlug = nameWatch
+        .toLowerCase()
+        .trim()
+        .replace(/[^\w\s-]/g, '') // remove special chars
+        .replace(/[\s_]+/g, '-') // replace space/underscore with hyphen
+        .replace(/^-+|-+$/g, ''); // trim hyphens
+      setValue('slug', generatedSlug);
+    }
+  }, [nameWatch, clientToEdit, setValue]);
+
+  // Image Upload Handle
+  const handleImageChange = async (e: React.ChangeEvent<HTMLInputElement>, type: 'logo' | 'banner' | 'promo') => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (file.size > 2 * 1024 * 1024) {
+      alert('A imagem excede o limite de 2MB. Por favor, otimize a imagem.');
+      return;
+    }
+
+    try {
+      const uploadPath = `uploads/${Date.now()}_${file.name}`;
+      const fileUrl = await dbService.uploadFile('iptv-assets', uploadPath, file);
+      
+      if (type === 'logo') setLogoPreview(fileUrl);
+      if (type === 'banner') setBannerPreview(fileUrl);
+      if (type === 'promo') setPromoPreview(fileUrl);
+    } catch (err) {
+      console.error('Upload error', err);
+      alert('Erro ao fazer upload da imagem.');
+    }
+  };
+
+  // Plan Management Helpers
+  const addPlan = () => {
+    const newPlan: ClientPlan = {
+      id: crypto.randomUUID(),
+      name: 'Novo Plano',
+      price: '30,00',
+      period: 'mensal',
+      features: ['Acesso completo', 'Suporte WhatsApp'],
+      isPopular: false
+    };
+    setPlans([...plans, newPlan]);
+  };
+
+  const updatePlan = (id: string, field: keyof ClientPlan, value: any) => {
+    setPlans(plans.map(p => p.id === id ? { ...p, [field]: value } : p));
+  };
+
+  const removePlan = (id: string) => {
+    setPlans(plans.filter(p => p.id !== id));
+  };
+
+  // Features inside Plan Helpers
+  const addFeatureToPlan = (planId: string) => {
+    setPlans(plans.map(p => {
+      if (p.id === planId) {
+        return { ...p, features: [...p.features, 'Novo recurso'] };
+      }
+      return p;
+    }));
+  };
+
+  const updateFeatureInPlan = (planId: string, featureIndex: number, value: string) => {
+    setPlans(plans.map(p => {
+      if (p.id === planId) {
+        const updatedFeatures = [...p.features];
+        updatedFeatures[featureIndex] = value;
+        return { ...p, features: updatedFeatures };
+      }
+      return p;
+    }));
+  };
+
+  const removeFeatureFromPlan = (planId: string, featureIndex: number) => {
+    setPlans(plans.map(p => {
+      if (p.id === planId) {
+        return { ...p, features: p.features.filter((_, idx) => idx !== featureIndex) };
+      }
+      return p;
+    }));
+  };
+
+  // Benefits Helpers
+  const addBenefit = () => {
+    const newBenefit: BenefitItem = {
+      id: crypto.randomUUID(),
+      title: 'Novo Benefício',
+      description: 'Descrição rápida do benefício.',
+      icon: 'Tv'
+    };
+    setBenefits([...benefits, newBenefit]);
+  };
+
+  const updateBenefit = (id: string, field: keyof BenefitItem, value: string) => {
+    setBenefits(benefits.map(b => b.id === id ? { ...b, [field]: value } : b));
+  };
+
+  const removeBenefit = (id: string) => {
+    setBenefits(benefits.filter(b => b.id !== id));
+  };
+
+  // FAQ Helpers
+  const addFaq = () => {
+    setFaqs([...faqs, { question: 'Nova pergunta?', answer: 'Resposta aqui.' }]);
+  };
+
+  const updateFaq = (index: number, field: keyof FAQItem, value: string) => {
+    const updated = [...faqs];
+    updated[index] = { ...updated[index], [field]: value };
+    setFaqs(updated);
+  };
+
+  const removeFaq = (index: number) => {
+    setFaqs(faqs.filter((_, idx) => idx !== index));
+  };
+
+  // Testimonial Helpers
+  const addTestimonial = () => {
+    const newTestimonial: TestimonialItem = {
+      id: crypto.randomUUID(),
+      name: 'Nome do Cliente',
+      comment: 'Depoimento estilizado do cliente sobre a estabilidade do servidor.',
+      rating: 5,
+      role: 'Cliente satisfeito'
+    };
+    setTestimonials([...testimonials, newTestimonial]);
+  };
+
+  const updateTestimonial = (id: string, field: keyof TestimonialItem, value: any) => {
+    setTestimonials(testimonials.map(t => t.id === id ? { ...t, [field]: value } : t));
+  };
+
+  const removeTestimonial = (id: string) => {
+    setTestimonials(testimonials.filter(t => t.id !== id));
+  };
+
+  // Submit Handler
+  const onSubmit = async (values: ClientFormValues) => {
+    setLoading(true);
+    setError(null);
+    try {
+      const payload: Partial<LandingPageData> = {
+        ...clientToEdit,
+        ...values,
+        logoUrl: logoPreview,
+        bannerUrl: bannerPreview,
+        promoImageUrl: promoPreview,
+        plans,
+        benefits,
+        faqs,
+        testimonials,
+      };
+
+      const result = await dbService.saveLandingPage(payload as any);
+      onSuccess(result);
+    } catch (err: any) {
+      setError(err.message || 'Erro ao salvar os dados da landing page.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div className="flex flex-col h-full bg-dark-surface border-l border-dark-border text-foreground">
+      {/* Form Header */}
+      <div className="flex items-center justify-between px-6 py-5 border-b border-dark-border bg-dark-bg/60">
+        <div>
+          <h2 className="text-lg font-bold text-white flex items-center space-x-2">
+            <Tv className="w-5 h-5 text-c6-gold animate-pulse" />
+            <span className="tracking-tight">{clientToEdit ? 'Editar Landing Page' : 'Criar Landing Page'}</span>
+          </h2>
+          <p className="text-[11px] text-slate-400 mt-0.5">
+            Configuração white-label dinâmica e responsiva do cliente.
+          </p>
+        </div>
+        <button 
+          onClick={onClose}
+          className="p-1.5 rounded-none bg-dark-border/45 hover:bg-dark-border text-slate-400 hover:text-c6-gold transition-colors cursor-pointer"
+        >
+          <X className="w-5 h-5" />
+        </button>
+      </div>
+ 
+      {/* Form Scroll Area */}
+      <form onSubmit={handleSubmit(onSubmit)} className="flex-1 overflow-y-auto px-6 py-6 space-y-8 pb-20">
+        {error && (
+          <div className="flex items-center space-x-2 rounded-none border border-red-500/30 bg-red-500/10 p-4 text-sm text-red-500">
+            <CheckCircle2 className="w-4 h-4 text-red-500 shrink-0" />
+            <span>{error}</span>
+          </div>
+        )}
+ 
+        {/* SECTION 1: DADOS BÁSICOS */}
+        <div className="space-y-4">
+          <h3 className="text-xs font-bold text-c6-gold uppercase tracking-widest border-b border-c6-gold/20 pb-2 flex items-center">
+            <span className="w-1.5 h-1.5 bg-c6-gold mr-2" />
+            1. Dados do Cliente
+          </h3>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <Input
+              {...register('name')}
+              label="Nome do Painel / IPTV"
+              placeholder="ex: Flux IPTV, Elite Stream"
+              error={errors.name?.message}
+              disabled={loading}
+            />
+            <Input
+              {...register('slug')}
+              label="URL Personalizada (Slug)"
+              placeholder="ex: flux-iptv"
+              error={errors.slug?.message}
+              disabled={loading}
+            />
+          </div>
+          <div className="space-y-1 mt-1">
+            <div className="text-xs text-slate-500 font-mono flex items-center space-x-1">
+              <span className="text-c6-gold font-semibold">★</span>
+              <span>Subdomínio:</span>
+              <span className="text-c6-gold font-medium">{slugWatch || '...'}.seudominio.com</span>
+            </div>
+            <div className="text-xs text-slate-500 font-mono flex items-center space-x-1">
+              <span className="text-slate-600">↳</span>
+              <span>Alternativo:</span>
+              <span className="text-slate-400">seudominio.com/site/{slugWatch || '...'}</span>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <Input
+              {...register('whatsapp')}
+              label="WhatsApp (com DDI + DDD)"
+              placeholder="ex: 5511999999999"
+              error={errors.whatsapp?.message}
+              disabled={loading}
+            />
+            <Input
+              {...register('telegram')}
+              label="Telegram (Usuário sem @)"
+              placeholder="ex: elite_support"
+              error={errors.telegram?.message}
+              disabled={loading}
+            />
+            <Input
+              {...register('instagram')}
+              label="Instagram (Usuário sem @)"
+              placeholder="ex: elite.iptv"
+              error={errors.instagram?.message}
+              disabled={loading}
+            />
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <Input
+              {...register('trialLink')}
+              label="Link Direto de Teste Grátis (Opcional)"
+              placeholder="ex: https://wa.me/... ou link externo"
+              error={errors.trialLink?.message}
+              disabled={loading}
+            />
+            <Input
+              {...register('customDomain')}
+              label="Domínio Próprio (Opcional)"
+              placeholder="ex: eliteiptv.com"
+              error={errors.customDomain?.message}
+              disabled={loading}
+            />
+          </div>
+
+          <Textarea
+            {...register('presentation')}
+            label="Texto de Apresentação (Hero Copy)"
+            placeholder="A melhor experiência de entretenimento..."
+            error={errors.presentation?.message}
+            disabled={loading}
+            rows={4}
+          />
+        </div>
+
+        {/* SECTION 2: IDENTIDADE VISUAL */}
+        <div className="space-y-5">
+          <h3 className="text-xs font-bold text-c6-gold uppercase tracking-widest border-b border-c6-gold/20 pb-2 flex items-center">
+            <span className="w-1.5 h-1.5 bg-c6-gold mr-2" />
+            2. Identidade Visual e Imagens
+          </h3>
+ 
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <label className="text-sm font-medium text-slate-300 flex items-center mb-1">
+                <Palette className="w-4 h-4 mr-2 text-white" />
+                Cor Primária
+              </label>
+              <div className="flex space-x-2">
+                <input
+                  type="color"
+                  {...register('primaryColor')}
+                  className="w-11 h-11 rounded-none border border-dark-border cursor-pointer bg-transparent"
+                />
+                <Input
+                  {...register('primaryColor')}
+                  placeholder="#ffffff"
+                  error={errors.primaryColor?.message}
+                  disabled={loading}
+                />
+              </div>
+            </div>
+ 
+            <div>
+              <label className="text-sm font-medium text-slate-300 flex items-center mb-1">
+                <Palette className="w-4 h-4 mr-2 text-white" />
+                Cor Secundária
+              </label>
+              <div className="flex space-x-2">
+                <input
+                  type="color"
+                  {...register('secondaryColor')}
+                  className="w-11 h-11 rounded-none border border-dark-border cursor-pointer bg-transparent"
+                />
+                <Input
+                  {...register('secondaryColor')}
+                  placeholder="#ffffff"
+                  error={errors.secondaryColor?.message}
+                  disabled={loading}
+                />
+              </div>
+            </div>
+          </div>
+
+          {/* Uploads Grid */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            {/* Logo Upload */}
+            <div className="flex flex-col items-center p-4 border border-dashed border-dark-border rounded-none bg-black/20">
+              <span className="text-xs font-semibold text-slate-300 mb-3">Logo do Cliente</span>
+              {logoPreview ? (
+                <div className="relative w-20 h-20 rounded-none bg-slate-900 border border-dark-border flex items-center justify-center overflow-hidden mb-3">
+                  <img src={logoPreview} alt="Logo" className="max-w-full max-h-full object-contain" />
+                  <button
+                    type="button"
+                    onClick={() => setLogoPreview('')}
+                    className="absolute top-1 right-1 p-0.5 rounded-none bg-red-600 text-white cursor-pointer"
+                  >
+                    <X className="w-3.5 h-3.5" />
+                  </button>
+                </div>
+              ) : (
+                <div className="w-20 h-20 rounded-none border border-dark-border flex flex-col items-center justify-center bg-dark-bg/60 text-slate-500 mb-3">
+                  <Upload className="w-6 h-6 mb-1" />
+                  <span className="text-[10px]">Sem Logo</span>
+                </div>
+              )}
+              <label className="px-3 py-1.5 rounded-none bg-dark-border text-xs text-white hover:bg-dark-border/80 cursor-pointer font-medium">
+                Escolher Arquivo
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={(e) => handleImageChange(e, 'logo')}
+                  className="hidden"
+                />
+              </label>
+            </div>
+ 
+            {/* Banner Upload */}
+            <div className="flex flex-col items-center p-4 border border-dashed border-dark-border rounded-none bg-black/20">
+              <span className="text-xs font-semibold text-slate-300 mb-3">Banner Principal (Fundo)</span>
+              {bannerPreview ? (
+                <div className="relative w-full aspect-video rounded-none bg-slate-900 border border-dark-border flex items-center justify-center overflow-hidden mb-3">
+                  <img src={bannerPreview} alt="Banner" className="w-full h-full object-cover" />
+                  <button
+                    type="button"
+                    onClick={() => setBannerPreview('')}
+                    className="absolute top-1 right-1 p-0.5 rounded-none bg-red-600 text-white cursor-pointer"
+                  >
+                    <X className="w-3.5 h-3.5" />
+                  </button>
+                </div>
+              ) : (
+                <div className="w-full aspect-video rounded-none border border-dark-border flex flex-col items-center justify-center bg-dark-bg/60 text-slate-500 mb-3">
+                  <Upload className="w-6 h-6 mb-1" />
+                  <span className="text-[10px]">Sem Banner</span>
+                </div>
+              )}
+              <label className="px-3 py-1.5 rounded-none bg-dark-border text-xs text-white hover:bg-dark-border/80 cursor-pointer font-medium">
+                Escolher Arquivo
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={(e) => handleImageChange(e, 'banner')}
+                  className="hidden"
+                />
+              </label>
+            </div>
+ 
+            {/* Promo Upload */}
+            <div className="flex flex-col items-center p-4 border border-dashed border-dark-border rounded-none bg-black/20">
+              <span className="text-xs font-semibold text-slate-300 mb-3">Imagem Promocional (Dispositivos)</span>
+              {promoPreview ? (
+                <div className="relative w-full aspect-video rounded-none bg-slate-900 border border-dark-border flex items-center justify-center overflow-hidden mb-3">
+                  <img src={promoPreview} alt="Promocional" className="w-full h-full object-cover" />
+                  <button
+                    type="button"
+                    onClick={() => setPromoPreview('')}
+                    className="absolute top-1 right-1 p-0.5 rounded-none bg-red-600 text-white cursor-pointer"
+                  >
+                    <X className="w-3.5 h-3.5" />
+                  </button>
+                </div>
+              ) : (
+                <div className="w-full aspect-video rounded-none border border-dark-border flex flex-col items-center justify-center bg-dark-bg/60 text-slate-500 mb-3">
+                  <Upload className="w-6 h-6 mb-1" />
+                  <span className="text-[10px]">Sem Imagem</span>
+                </div>
+              )}
+              <label className="px-3 py-1.5 rounded-none bg-dark-border text-xs text-white hover:bg-dark-border/80 cursor-pointer font-medium">
+                Escolher Arquivo
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={(e) => handleImageChange(e, 'promo')}
+                  className="hidden"
+                />
+              </label>
+            </div>
+          </div>
+        </div>
+ 
+        {/* SECTION 3: PLANOS E VALORES */}
+        <div className="space-y-4">
+          <div className="flex items-center justify-between border-b border-c6-gold/20 pb-2">
+            <h3 className="text-xs font-bold text-c6-gold uppercase tracking-widest flex items-center">
+              <span className="w-1.5 h-1.5 bg-c6-gold mr-2" />
+              3. Tabela de Planos
+            </h3>
+            <Button
+              type="button"
+              variant="secondary"
+              size="sm"
+              leftIcon={<Plus className="w-4 h-4" />}
+              onClick={addPlan}
+            >
+              Adicionar Plano
+            </Button>
+          </div>
+ 
+          <div className="space-y-4">
+            {plans.map((plan, pIdx) => (
+              <div key={plan.id} className="p-4 border border-dark-border rounded-none bg-black/30 relative">
+                <button
+                  type="button"
+                  onClick={() => removePlan(plan.id)}
+                  className="absolute top-4 right-4 p-1 text-slate-500 hover:text-red-500 transition-colors cursor-pointer"
+                >
+                  <Trash2 className="w-4 h-4" />
+                </button>
+
+                <div className="grid grid-cols-1 sm:grid-cols-4 gap-4 mb-4">
+                  <div className="sm:col-span-2">
+                    <Input
+                      label="Nome do Plano"
+                      value={plan.name}
+                      onChange={(e) => updatePlan(plan.id, 'name', e.target.value)}
+                    />
+                  </div>
+                  <div>
+                    <Input
+                      label="Preço (R$)"
+                      value={plan.price}
+                      onChange={(e) => updatePlan(plan.id, 'price', e.target.value)}
+                    />
+                  </div>
+                  <div>
+                    <Select
+                      label="Período"
+                      value={plan.period}
+                      onChange={(e) => updatePlan(plan.id, 'period', e.target.value)}
+                      options={[
+                        { value: 'mensal', label: 'Mensal' },
+                        { value: 'trimestral', label: 'Trimestral' },
+                        { value: 'semestral', label: 'Semestral' },
+                        { value: 'anual', label: 'Anual' }
+                      ]}
+                    />
+                  </div>
+                </div>
+
+                {/* Features Inside Plan */}
+                <div className="mt-4 border-t border-dark-border/45 pt-4">
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="text-xs font-bold text-slate-400">Recursos inclusos neste plano:</span>
+                    <button
+                      type="button"
+                      onClick={() => addFeatureToPlan(plan.id)}
+                      className="text-xs font-semibold text-white flex items-center hover:underline cursor-pointer"
+                    >
+                      <Plus className="w-3.5 h-3.5 mr-1" />
+                      Adicionar Recurso
+                    </button>
+                  </div>
+ 
+                  <div className="space-y-2">
+                    {plan.features.map((feature, fIdx) => (
+                      <div key={fIdx} className="flex items-center space-x-2">
+                        <Input
+                          placeholder="ex: Canais em Full HD"
+                          value={feature}
+                          onChange={(e) => updateFeatureInPlan(plan.id, fIdx, e.target.value)}
+                          className="h-9"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => removeFeatureFromPlan(plan.id, fIdx)}
+                          className="text-slate-500 hover:text-red-500 transition-colors p-1"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+ 
+                <div className="mt-4 flex items-center space-x-2">
+                  <input
+                    type="checkbox"
+                    id={`popular-${plan.id}`}
+                    checked={plan.isPopular}
+                    onChange={(e) => updatePlan(plan.id, 'isPopular', e.target.checked)}
+                    className="rounded-none border-dark-border bg-dark-bg/60 text-white focus:ring-white"
+                  />
+                  <label htmlFor={`popular-${plan.id}`} className="text-xs font-semibold text-slate-300 cursor-pointer">
+                    Destacar como "Mais Popular" (Borda destacada e tag na landing page)
+                  </label>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* SECTION 4: GESTÃO FINANCEIRA E STATUS DE ASSINATURA */}
+        <div className="space-y-4">
+          <h3 className="text-xs font-bold text-c6-gold uppercase tracking-widest border-b border-c6-gold/20 pb-2 flex items-center">
+            <span className="w-1.5 h-1.5 bg-c6-gold mr-2" />
+            4. Informações de Pagamento & Cobrança (PIX)
+          </h3>
+          
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <Input
+              {...register('pixKey')}
+              label="Chave PIX (Para o checkout automático do cliente)"
+              placeholder="ex: Celular, CNPJ, E-mail ou Aleatória"
+              error={errors.pixKey?.message}
+              disabled={loading}
+            />
+            <Select
+              {...register('status')}
+              label="Status da Assinatura"
+              error={errors.status?.message}
+              disabled={loading}
+              options={[
+                { value: 'active', label: 'Ativo (Publicado)' },
+                { value: 'pending', label: 'Pendente (Aguardando liberação)' },
+                { value: 'suspended', label: 'Suspenso (Plano vencido)' },
+                { value: 'blocked', label: 'Bloqueado (Violação de regras)' },
+                { value: 'expired', label: 'Expirado (Exibir tela de renovação)' }
+              ]}
+            />
+          </div>
+        </div>
+
+        {/* SECTION 5: BENEFÍCIOS */}
+        <div className="space-y-4">
+          <div className="flex items-center justify-between border-b border-c6-gold/20 pb-2">
+            <h3 className="text-xs font-bold text-c6-gold uppercase tracking-widest flex items-center">
+              <span className="w-1.5 h-1.5 bg-c6-gold mr-2" />
+              5. Grid de Benefícios
+            </h3>
+            <Button
+              type="button"
+              variant="secondary"
+              size="sm"
+              leftIcon={<Plus className="w-4 h-4" />}
+              onClick={addBenefit}
+            >
+              Adicionar Benefício
+            </Button>
+          </div>
+ 
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            {benefits.map((b) => (
+              <div key={b.id} className="p-4 border border-dark-border rounded-none bg-black/30 relative">
+                <button
+                  type="button"
+                  onClick={() => removeBenefit(b.id)}
+                  className="absolute top-2 right-2 p-1 text-slate-500 hover:text-red-500 transition-colors cursor-pointer"
+                >
+                  <Trash2 className="w-4 h-4" />
+                </button>
+ 
+                <div className="space-y-3 flex flex-col">
+                  <Select
+                    label="Ícone Lucide"
+                    value={b.icon}
+                    onChange={(e) => updateBenefit(b.id, 'icon', e.target.value)}
+                    options={[
+                      { value: 'Tv', label: 'Televisão (Tv)' },
+                      { value: 'Zap', label: 'Raio (Zap)' },
+                      { value: 'Play', label: 'Player (Play)' },
+                      { value: 'MessageSquare', label: 'Suporte (MessageSquare)' },
+                      { value: 'Shield', label: 'Escudo (Shield)' },
+                      { value: 'Globe', label: 'Internet (Globe)' },
+                      { value: 'Smartphone', label: 'Celular (Smartphone)' }
+                    ]}
+                  />
+                  <Input
+                    label="Título"
+                    value={b.title}
+                    onChange={(e) => updateBenefit(b.id, 'title', e.target.value)}
+                  />
+                  <Textarea
+                    label="Descrição"
+                    value={b.description}
+                    onChange={(e) => updateBenefit(b.id, 'description', e.target.value)}
+                    rows={2}
+                  />
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* SECTION 6: PERGUNTAS FREQUENTES */}
+        <div className="space-y-4">
+          <div className="flex items-center justify-between border-b border-c6-gold/20 pb-2">
+            <h3 className="text-xs font-bold text-c6-gold uppercase tracking-widest flex items-center">
+              <span className="w-1.5 h-1.5 bg-c6-gold mr-2" />
+              6. Perguntas Frequentes (FAQ)
+            </h3>
+            <Button
+              type="button"
+              variant="secondary"
+              size="sm"
+              leftIcon={<Plus className="w-4 h-4" />}
+              onClick={addFaq}
+            >
+              Adicionar FAQ
+            </Button>
+          </div>
+ 
+          <div className="space-y-4">
+            {faqs.map((faq, index) => (
+              <div key={index} className="p-4 border border-dark-border rounded-none bg-black/30 relative">
+                <button
+                  type="button"
+                  onClick={() => removeFaq(index)}
+                  className="absolute top-2 right-2 p-1 text-slate-500 hover:text-red-500 transition-colors cursor-pointer"
+                >
+                  <Trash2 className="w-4 h-4" />
+                </button>
+
+                <div className="space-y-3">
+                  <Input
+                    label={`Pergunta #${index + 1}`}
+                    value={faq.question}
+                    onChange={(e) => updateFaq(index, 'question', e.target.value)}
+                  />
+                  <Textarea
+                    label="Resposta"
+                    value={faq.answer}
+                    onChange={(e) => updateFaq(index, 'answer', e.target.value)}
+                    rows={2}
+                  />
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Form Actions Footer */}
+        <div className="flex items-center justify-end space-x-3 pt-6 border-t border-dark-border bg-dark-surface">
+          <Button
+            type="button"
+            variant="ghost"
+            onClick={onClose}
+            disabled={loading}
+          >
+            Cancelar
+          </Button>
+          <Button
+            type="submit"
+            variant="primary"
+            isLoading={loading}
+          >
+            {clientToEdit ? 'Salvar Alterações' : 'Criar Landing Page'}
+          </Button>
+        </div>
+      </form>
+    </div>
+  );
+}
