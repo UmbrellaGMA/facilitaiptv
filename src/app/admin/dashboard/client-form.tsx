@@ -17,7 +17,10 @@ import {
   CheckCircle2, 
   Sparkles,
   Tv,
-  Link as LinkIcon
+  Link as LinkIcon,
+  Star,
+  MessageSquare,
+  ImagePlus
 } from 'lucide-react';
 import { Button } from '../../../components/ui/Button';
 import { Input } from '../../../components/ui/Input';
@@ -319,6 +322,26 @@ export default function ClientForm({ clientToEdit, onClose, onSuccess }: ClientF
 
   const removeTestimonial = (id: string) => {
     setTestimonials(testimonials.filter(t => t.id !== id));
+  };
+
+  // Testimonial Screenshot Upload
+  const handleTestimonialScreenshot = async (e: React.ChangeEvent<HTMLInputElement>, testimonialId: string) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (file.size > 2 * 1024 * 1024) {
+      alert('A imagem excede o limite de 2MB.');
+      return;
+    }
+
+    try {
+      const uploadPath = `testimonials/${Date.now()}_${file.name}`;
+      const fileUrl = await dbService.uploadFile('iptv-assets', uploadPath, file);
+      updateTestimonial(testimonialId, 'screenshotUrl', fileUrl);
+    } catch (err) {
+      console.error('Upload error', err);
+      alert('Erro ao fazer upload do print.');
+    }
   };
 
   // Featured Movies Helpers
@@ -992,6 +1015,125 @@ export default function ClientForm({ clientToEdit, onClose, onSuccess }: ClientF
             {featuredMovies.length === 0 && (
               <div className="text-center py-6 text-sm text-slate-500 border border-dashed border-dark-border/40 rounded-[6px]">
                 Nenhum filme cadastrado. Clique em "Adicionar Filme" para começar.
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* SECTION 8: DEPOIMENTOS / FEEDBACKS */}
+        <div className="space-y-4">
+          <div className="flex items-center justify-between border-b border-c6-gold/20 pb-2">
+            <h3 className="text-xs font-bold text-c6-gold uppercase tracking-widest flex items-center">
+              <span className="w-1.5 h-1.5 bg-c6-gold mr-2" />
+              8. Depoimentos / Feedbacks de Clientes
+            </h3>
+            <Button
+              type="button"
+              variant="secondary"
+              size="sm"
+              leftIcon={<Plus className="w-4 h-4" />}
+              onClick={addTestimonial}
+            >
+              Adicionar Depoimento
+            </Button>
+          </div>
+
+          <div className="space-y-4">
+            {testimonials.map((t) => (
+              <div key={t.id} className="p-4 border border-dark-border/40 rounded-[6px] bg-black/30 relative">
+                <button
+                  type="button"
+                  onClick={() => removeTestimonial(t.id)}
+                  className="absolute top-4 right-4 p-1 text-slate-500 hover:text-red-500 transition-colors cursor-pointer"
+                >
+                  <Trash2 className="w-4 h-4" />
+                </button>
+
+                <div className="grid grid-cols-1 md:grid-cols-12 gap-4">
+                  {/* Screenshot Preview */}
+                  <div className="md:col-span-4 flex flex-col items-center justify-center border border-dark-border/30 rounded-[6px] bg-zinc-950 p-3 min-h-[180px]">
+                    {t.screenshotUrl ? (
+                      <div className="relative w-full">
+                        <img 
+                          src={t.screenshotUrl} 
+                          alt="Print do feedback" 
+                          className="w-full h-auto max-h-[200px] object-contain rounded-[6px] shadow-md"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => updateTestimonial(t.id, 'screenshotUrl', '')}
+                          className="absolute top-1 right-1 p-1 bg-red-500/80 rounded-full text-white hover:bg-red-600 transition-colors cursor-pointer"
+                        >
+                          <X className="w-3 h-3" />
+                        </button>
+                      </div>
+                    ) : (
+                      <label className="flex flex-col items-center justify-center cursor-pointer hover:opacity-80 transition-opacity w-full h-full">
+                        <ImagePlus className="w-10 h-10 text-slate-600 mb-2" />
+                        <span className="text-[11px] text-slate-400 font-semibold text-center">Subir Print / Screenshot</span>
+                        <span className="text-[9px] text-slate-600 mt-1">PNG, JPG, WEBP (máx. 2MB)</span>
+                        <input
+                          type="file"
+                          accept="image/*"
+                          className="hidden"
+                          onChange={(e) => handleTestimonialScreenshot(e, t.id)}
+                        />
+                      </label>
+                    )}
+                  </div>
+
+                  {/* Text Fields */}
+                  <div className="md:col-span-8 space-y-3">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      <Input
+                        label="Nome do Cliente"
+                        value={t.name}
+                        onChange={(e) => updateTestimonial(t.id, 'name', e.target.value)}
+                        placeholder="ex: Paulo Santos"
+                      />
+                      <Input
+                        label="Função / Rótulo"
+                        value={t.role || ''}
+                        onChange={(e) => updateTestimonial(t.id, 'role', e.target.value)}
+                        placeholder="ex: Cliente há 2 anos"
+                      />
+                    </div>
+
+                    <Textarea
+                      label="Comentário / Depoimento"
+                      value={t.comment}
+                      onChange={(e) => updateTestimonial(t.id, 'comment', e.target.value)}
+                      placeholder="Depoimento do cliente sobre a qualidade do serviço..."
+                      rows={3}
+                    />
+
+                    <div className="flex items-center space-x-3">
+                      <span className="text-xs text-slate-400 font-semibold">Avaliação:</span>
+                      <div className="flex items-center space-x-1">
+                        {[1, 2, 3, 4, 5].map((star) => (
+                          <button
+                            key={star}
+                            type="button"
+                            onClick={() => updateTestimonial(t.id, 'rating', star)}
+                            className="cursor-pointer transition-transform hover:scale-110"
+                          >
+                            <Star
+                              className={`w-5 h-5 ${star <= t.rating ? 'text-yellow-500 fill-yellow-500' : 'text-zinc-700'}`}
+                            />
+                          </button>
+                        ))}
+                      </div>
+                      <span className="text-xs text-slate-500 font-mono">{t.rating}/5</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            ))}
+            {testimonials.length === 0 && (
+              <div className="text-center py-8 text-sm text-slate-500 border border-dashed border-dark-border/40 rounded-[6px]">
+                <MessageSquare className="w-8 h-8 mx-auto text-slate-600 mb-3" />
+                <p>Nenhum depoimento cadastrado.</p>
+                <p className="text-xs text-slate-600 mt-1">Adicione feedbacks ou suba prints de clientes satisfeitos.</p>
               </div>
             )}
           </div>

@@ -486,23 +486,36 @@ export default function ClientPageContent({ data }: ClientPageContentProps) {
             </p>
           </div>
   
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {data.testimonials.map((t) => (
-              <div key={t.id} className="bg-zinc-950 border border-zinc-900/60 p-6 rounded-[6px]">
-                <div className="flex items-center space-x-1 mb-4">
-                  {[1, 2, 3, 4, 5].map((star) => (
-                    <Star 
-                      key={star} 
-                      className={`w-3.5 h-3.5 fill-current ${star <= t.rating ? 'text-yellow-500' : 'text-zinc-800'}`} 
+              <div key={t.id} className="bg-zinc-950 border border-zinc-900/60 rounded-[6px] overflow-hidden">
+                {/* Screenshot image if available */}
+                {t.screenshotUrl && (
+                  <div className="w-full border-b border-zinc-900/40">
+                    <img 
+                      src={t.screenshotUrl} 
+                      alt={`Feedback de ${t.name}`}
+                      className="w-full h-auto max-h-[280px] object-contain bg-zinc-900/30"
                     />
-                  ))}
-                </div>
-                <p className="text-zinc-400 text-xs leading-relaxed mb-6 italic">
-                  "{t.comment}"
-                </p>
-                <div className="border-t border-zinc-900 pt-4">
-                  <p className="font-bold text-white text-xs uppercase tracking-wide">{t.name}</p>
-                  <p className="text-[10px] text-zinc-500 font-mono mt-0.5">{t.role || 'Cliente Ativo'}</p>
+                  </div>
+                )}
+                
+                <div className="p-6">
+                  <div className="flex items-center space-x-1 mb-4">
+                    {[1, 2, 3, 4, 5].map((star) => (
+                      <Star 
+                        key={star} 
+                        className={`w-3.5 h-3.5 fill-current ${star <= t.rating ? 'text-yellow-500' : 'text-zinc-800'}`} 
+                      />
+                    ))}
+                  </div>
+                  <p className="text-zinc-400 text-xs leading-relaxed mb-6 italic">
+                    &quot;{t.comment}&quot;
+                  </p>
+                  <div className="border-t border-zinc-900 pt-4">
+                    <p className="font-bold text-white text-xs uppercase tracking-wide">{t.name}</p>
+                    <p className="text-[10px] text-zinc-500 font-mono mt-0.5">{t.role || 'Cliente Ativo'}</p>
+                  </div>
                 </div>
               </div>
             ))}

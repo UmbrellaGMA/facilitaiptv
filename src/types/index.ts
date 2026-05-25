@@ -27,6 +27,7 @@ export interface TestimonialItem {
   rating: number;
   avatarUrl?: string;
   role?: string;
+  screenshotUrl?: string;
 }
 
 export interface BenefitItem {
