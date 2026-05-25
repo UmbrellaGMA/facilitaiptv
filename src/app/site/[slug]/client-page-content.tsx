@@ -20,7 +20,6 @@ import {
 } from 'lucide-react';
 import { LandingPageData, ClientPlan, BenefitItem } from '../../../types';
 import { Button } from '../../../components/ui/Button';
-import { Card } from '../../../components/ui/Card';
 
 interface ClientPageContentProps {
   data: LandingPageData;
@@ -419,16 +418,16 @@ export default function ClientPageContent({ data }: ClientPageContentProps) {
  
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 items-stretch justify-center max-w-5xl mx-auto">
           {data.plans.map((plan) => (
-            <Card 
+            <div 
               key={plan.id}
-              className="bg-zinc-950 border h-full p-8 transition-all flex flex-col justify-between rounded-[6px] relative shadow-lg"
+              className="bg-zinc-950 border h-full p-8 transition-all flex flex-col justify-between rounded-[6px] relative shadow-lg overflow-visible"
               style={{
                 borderColor: plan.isPopular ? data.primaryColor : 'rgb(24, 24, 27)'
               }}
             >
               {plan.isPopular && (
                 <span 
-                  className="absolute -top-3 left-1/2 -translate-x-1/2 px-4 py-1 text-[10px] font-extrabold text-white uppercase tracking-widest rounded-full"
+                  className="absolute -top-3 left-1/2 -translate-x-1/2 px-4 py-1 text-[10px] font-extrabold text-white uppercase tracking-widest rounded-full whitespace-nowrap z-10"
                   style={{ backgroundColor: data.primaryColor }}
                 >
                   Mais Vendido
@@ -470,7 +469,7 @@ export default function ClientPageContent({ data }: ClientPageContentProps) {
                   Assinar Agora via WhatsApp
                 </Button>
               </div>
-            </Card>
+            </div>
           ))}
         </div>
       </section>
