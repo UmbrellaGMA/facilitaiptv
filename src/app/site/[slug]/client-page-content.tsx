@@ -388,13 +388,13 @@ export default function ClientPageContent({ data }: ClientPageContentProps) {
  
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
           {data.benefits.map((b) => (
-            <Card key={b.id} className="bg-zinc-950/80 border border-zinc-900/60 h-full p-6 transition-all rounded-[6px] hover:border-zinc-800">
+            <div key={b.id} className="bg-zinc-950/80 border border-zinc-900/60 h-full p-6 transition-all rounded-[6px] hover:border-zinc-800">
               <div className="w-12 h-12 bg-zinc-900/60 border border-zinc-800/80 flex items-center justify-center mb-5 rounded-[6px]">
                 {renderBenefitIcon(b.icon)}
               </div>
               <h3 className="text-base font-bold text-white uppercase tracking-wide mb-1.5">{b.title}</h3>
               <p className="text-zinc-500 text-xs leading-relaxed">{b.description}</p>
-            </Card>
+            </div>
           ))}
         </div>
       </section>
@@ -488,7 +488,7 @@ export default function ClientPageContent({ data }: ClientPageContentProps) {
   
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             {data.testimonials.map((t) => (
-              <Card key={t.id} className="bg-zinc-950 border border-zinc-900/60 p-6 rounded-[6px]">
+              <div key={t.id} className="bg-zinc-950 border border-zinc-900/60 p-6 rounded-[6px]">
                 <div className="flex items-center space-x-1 mb-4">
                   {[1, 2, 3, 4, 5].map((star) => (
                     <Star 
@@ -504,7 +504,7 @@ export default function ClientPageContent({ data }: ClientPageContentProps) {
                   <p className="font-bold text-white text-xs uppercase tracking-wide">{t.name}</p>
                   <p className="text-[10px] text-zinc-500 font-mono mt-0.5">{t.role || 'Cliente Ativo'}</p>
                 </div>
-              </Card>
+              </div>
             ))}
           </div>
         </section>
