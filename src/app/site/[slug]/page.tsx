@@ -41,6 +41,15 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const title = `${pageData.name} | Canais, Filmes e Séries Premium em HD e 4K`;
   const description = pageData.presentation || `Assista a melhor grade de canais abertos e fechados, filmes e séries on-demand com a ${pageData.name}. Solicite seu teste grátis!`;
 
+  // OG Image fallback chain: promoImage → banner → logo → default stock
+  const defaultOgImage = 'https://images.unsplash.com/photo-1593789198777-f29bc259780e?q=80&w=1200&auto=format&fit=crop';
+  const ogImageUrl = pageData.promoImageUrl || pageData.bannerUrl || pageData.logoUrl || defaultOgImage;
+
+  // Use custom domain if configured, otherwise fallback to slug-based subdomain
+  const siteUrl = pageData.customDomain
+    ? `https://${pageData.customDomain}`
+    : `https://${slug}.facilitaiptv.online`;
+
   return {
     title,
     description,
@@ -53,14 +62,14 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       title,
       description,
       type: 'website',
-      url: `https://${slug}.meudominio.com`,
+      url: siteUrl,
       siteName: pageData.name,
       images: [
         {
-          url: pageData.promoImageUrl || 'https://images.unsplash.com/photo-1593789198777-f29bc259780e?q=80&w=1200&auto=format&fit=crop',
+          url: ogImageUrl,
           width: 1200,
           height: 630,
-          alt: `${pageData.name} Promo`
+          alt: `${pageData.name} - Canais, Filmes e Séries Premium`
         }
       ]
     },
@@ -68,7 +77,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       card: 'summary_large_image',
       title,
       description,
-      images: [pageData.promoImageUrl || '']
+      images: [ogImageUrl]
     }
   };
 }

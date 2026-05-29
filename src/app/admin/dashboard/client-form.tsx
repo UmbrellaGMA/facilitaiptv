@@ -765,9 +765,12 @@ export default function ClientForm({ clientToEdit, paymentToEdit, onClose, onSuc
               </label>
             </div>
  
-            {/* Promo Upload */}
+            {/* Promo / OG Image Upload */}
             <div className="flex flex-col items-center p-4 border border-dashed border-dark-border/30 rounded-[6px] bg-black/20">
-              <span className="text-xs font-semibold text-slate-300 mb-3">Imagem Promocional (Dispositivos)</span>
+              <span className="text-xs font-semibold text-slate-300 mb-1">Imagem de Compartilhamento (OG)</span>
+              <span className="text-[10px] text-amber-400/80 font-medium mb-3 text-center leading-tight">
+                ⚠️ Esta imagem aparece quando o link do site é compartilhado no WhatsApp, Telegram e redes sociais. Ideal: 1200×630px
+              </span>
               {promoPreview ? (
                 <div className="relative w-full aspect-video rounded-[6px] bg-slate-900 border border-dark-border/30 flex items-center justify-center overflow-hidden mb-3">
                   <img src={promoPreview} alt="Promocional" className="w-full h-full object-cover" />
